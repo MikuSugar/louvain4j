@@ -1,2 +1,2 @@
-# louvain4j-
+# louvain4j
 louvain java impl
