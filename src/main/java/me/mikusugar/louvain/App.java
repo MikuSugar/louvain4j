@@ -11,7 +11,7 @@ public class App
 {
     public static void main(String[] args) throws IOException
     {
-        String input = "your_input_file.txt";
+        String input = args[0];
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
         if (louvain != null)
         {

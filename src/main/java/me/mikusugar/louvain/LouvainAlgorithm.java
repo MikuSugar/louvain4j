@@ -59,13 +59,13 @@ public class LouvainAlgorithm
     {
         Int2IntMap hs = new Int2IntOpenHashMap();
         Louvain lv = new Louvain();
-        int l = 0, ei = 0, r = 0;
+        int l = 0, ei = 0;
         try (BufferedReader reader = new BufferedReader(new FileReader(input)))
         {
             String line;
             while ((line = reader.readLine()) != null)
             {
-                String[] tokens = line.trim().split("\t");
+                String[] tokens = line.trim().split("[\\s　]+");
                 final int v1 = Integer.parseInt(tokens[0]);
                 final int v2 = Integer.parseInt(tokens[0]);
                 if (!hs.containsKey(v1))
@@ -90,10 +90,10 @@ public class LouvainAlgorithm
             String line;
             while ((line = reader.readLine()) != null)
             {
-                String[] tokens = line.trim().split("\t");
+                String[] tokens = line.trim().split("[\\s　]+");
                 int left = hs.get(Integer.parseInt(tokens[0]));
                 int right = hs.get(Integer.parseInt(tokens[1]));
-                double weight = Double.parseDouble(tokens[2]);
+                double weight = tokens.length == 3 ? Double.parseDouble(tokens[2]) : 1d;
                 lv.sumw += weight;
                 initNode(lv, left, weight);
                 initNode(lv, right, weight);
@@ -181,11 +181,15 @@ public class LouvainAlgorithm
                 idc = 0;
                 while (ei != -1)
                 {
+                    System.out.println(ei);
                     int wi = lv.edges[ei].right;
                     double wei = lv.edges[ei].weight;
                     int wci = lv.nodes[wi].clsid;
                     weight[wci] += wei;
-                    ids[idc++] = wci;
+                    if (idc < ids.length)
+                    {
+                        ids[idc++] = wci;
+                    }
                     ei = lv.edges[ei].next;
                 }
                 double maxInWei = 0;
