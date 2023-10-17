@@ -21,7 +21,7 @@ public class TestLouvain
     @Test
     public void testP2P31() throws IOException
     {
-        final String input = getResourcePath() + "/" + "p2p-31.e";
+        final String input = getResourcePath() + "/" + "p2p-31.csv";
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
         if (louvain != null)
         {
@@ -38,7 +38,7 @@ public class TestLouvain
     @Test
     public void trans() throws IOException
     {
-        final String input = getResourcePath() + "/" + "p2p-31.e";
+        final String input = getResourcePath() + "/" + "p2p-31.csv";
         String out = input + ".txt";
         try (
                 BufferedReader reader = new BufferedReader(new FileReader(input));
