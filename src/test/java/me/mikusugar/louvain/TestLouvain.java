@@ -27,7 +27,21 @@ public class TestLouvain
         {
             LouvainAlgorithm.learnLouvain(louvain);
             // Do something with the results
-            LouvainAlgorithm.saveLouvain(louvain);
+            LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
+            LouvainAlgorithm.clear(louvain);
+        }
+    }
+
+    @Test
+    public void testClub() throws IOException
+    {
+        final String input = getResourcePath() + "/" + "club.txt";
+        Louvain louvain = LouvainAlgorithm.createLouvain(input);
+        if (louvain != null)
+        {
+            LouvainAlgorithm.learnLouvain(louvain);
+            // Do something with the results
+            LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
             LouvainAlgorithm.clear(louvain);
         }
     }

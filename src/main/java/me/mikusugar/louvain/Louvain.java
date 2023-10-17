@@ -21,4 +21,6 @@ public class Louvain
     public Node[] nodes;
 
     public Edge[] edges;
+
+    public String input;
 }

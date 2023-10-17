@@ -17,7 +17,7 @@ public class App
         {
             LouvainAlgorithm.learnLouvain(louvain);
             // Do something with the results
-            LouvainAlgorithm.saveLouvain(louvain);
+            LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
             LouvainAlgorithm.clear(louvain);
         }
     }

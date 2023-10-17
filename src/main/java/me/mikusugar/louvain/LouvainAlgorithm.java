@@ -2,10 +2,10 @@ package me.mikusugar.louvain;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -59,6 +59,7 @@ public class LouvainAlgorithm
     {
         Int2IntMap hs = new Int2IntOpenHashMap();
         Louvain lv = new Louvain();
+        lv.input = input;
         int l = 0, ei = 0;
         try (BufferedReader reader = new BufferedReader(new FileReader(input)))
         {
@@ -307,9 +308,44 @@ public class LouvainAlgorithm
         }
     }
 
-    public static void saveLouvain(Louvain lv)
+    public static void saveLouvain(Louvain lv, String out) throws IOException
     {
-        //todo
+        IntSet hs = new IntOpenHashSet(lv.nodes.length);
+        try (
+                BufferedReader reader = new BufferedReader(new FileReader(lv.input));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(out))
+        )
+        {
+            while (reader.ready())
+            {
+                final String[] strs = reader.readLine().trim().split("[\\s　]+");
+                final int nodeLeft = Integer.parseInt(strs[0]);
+                final int nodeRight = Integer.parseInt(strs[1]);
+                if (!hs.contains(nodeLeft))
+                {
+                    final int nodeLeftId = hs.size();
+                    final int clusterId = find(nodeLeftId, lv.nodes);
+                    hs.add(nodeLeft);
+                    writer.write(nodeLeft + "," + clusterId + System.lineSeparator());
+                }
+                if (!hs.contains(nodeRight))
+                {
+                    final int nodeRightId = hs.size();
+                    final int clusterId = find(nodeRightId, lv.nodes);
+                    hs.add(nodeRight);
+                    writer.write(nodeRight + "," + clusterId + System.lineSeparator());
+                }
+            }
+        }
+    }
+
+    private static int find(int idx, Node[] nodes)
+    {
+        if (nodes[idx].clsid == idx)
+        {
+            return idx;
+        }
+        return nodes[idx].clsid = find(nodes[idx].clsid, nodes);
     }
 
     public static void clear(Louvain lv)
