@@ -67,7 +67,7 @@ public class LouvainAlgorithm
             {
                 String[] tokens = line.trim().split("[\\s　]+");
                 final int v1 = Integer.parseInt(tokens[0]);
-                final int v2 = Integer.parseInt(tokens[0]);
+                final int v2 = Integer.parseInt(tokens[1]);
                 if (!hs.containsKey(v1))
                 {
                     hs.put(v1, hs.size());
@@ -98,7 +98,9 @@ public class LouvainAlgorithm
                 initNode(lv, left, weight);
                 initNode(lv, right, weight);
                 linkEdge(lv, left, right, ei, weight);
+                ei++;
                 linkEdge(lv, right, left, ei, weight);
+                ei++;
             }
             return lv;
         }
@@ -144,11 +146,10 @@ public class LouvainAlgorithm
             {
                 lv.nodes[next].prev = -1;
                 lv.nodes[next].clsid = next;
-                while (next != -1)
+                while (-1 != (next = lv.nodes[next].next))
                 {
                     lv.nodes[cid].count += lv.nodes[next].count;
                     lv.nodes[next].clsid = cid;
-                    next = lv.nodes[next].next;
                 }
                 lv.nodes[cid].clstot = lv.nodes[id].clstot - lv.nodes[id].kin - lv.nodes[id].kout;
                 lv.nodes[cid].clskin = lv.nodes[id].clskin - lv.nodes[id].kin - 2 * weight;
@@ -165,7 +166,7 @@ public class LouvainAlgorithm
         int[] ids;
         double[] weight;
 
-        ids = new int[lv.clen];
+        ids = new int[lv.nlen];
         weight = new double[lv.nlen];
         Arrays.fill(ids, -1);
         stageTwo = 0;
@@ -181,15 +182,11 @@ public class LouvainAlgorithm
                 idc = 0;
                 while (ei != -1)
                 {
-                    System.out.println(ei);
                     int wi = lv.edges[ei].right;
                     double wei = lv.edges[ei].weight;
                     int wci = lv.nodes[wi].clsid;
                     weight[wci] += wei;
-                    if (idc < ids.length)
-                    {
-                        ids[idc++] = wci;
-                    }
+                    ids[idc++] = wci;
                     ei = lv.edges[ei].next;
                 }
                 double maxInWei = 0;
