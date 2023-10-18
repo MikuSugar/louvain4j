@@ -17,8 +17,11 @@ with open(edge_path, 'r') as edge_file:
 c_dist = {}
 community_map = {}
 with open(nodes_path, 'r') as node_file:
+    next(node_file)
     for line in node_file:
-        node_id, community_id = line.strip().split(",")
+        info = line.strip().split(",")
+        node_id = info[0]
+        community_id = info[1]
         cid = int(community_id)
         if cid not in c_dist.keys():
             c_dist[cid] = len(c_dist)

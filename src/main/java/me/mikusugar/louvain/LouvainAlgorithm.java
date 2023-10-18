@@ -316,26 +316,30 @@ public class LouvainAlgorithm
                 BufferedWriter writer = new BufferedWriter(new FileWriter(out))
         )
         {
+            writer.write("node,CommunityID,CommunityCount,kin,kout");
+            writer.write(System.lineSeparator());
             while (reader.ready())
             {
                 final String[] strs = reader.readLine().trim().split("[\\s　]+");
                 final int nodeLeft = Integer.parseInt(strs[0]);
                 final int nodeRight = Integer.parseInt(strs[1]);
-                if (!hs.contains(nodeLeft))
-                {
-                    final int nodeLeftId = hs.size();
-                    final int clusterId = find(nodeLeftId, lv.nodes);
-                    hs.add(nodeLeft);
-                    writer.write(nodeLeft + "," + clusterId + System.lineSeparator());
-                }
-                if (!hs.contains(nodeRight))
-                {
-                    final int nodeRightId = hs.size();
-                    final int clusterId = find(nodeRightId, lv.nodes);
-                    hs.add(nodeRight);
-                    writer.write(nodeRight + "," + clusterId + System.lineSeparator());
-                }
+                writeVertex(lv, hs, writer, nodeLeft);
+                writeVertex(lv, hs, writer, nodeRight);
             }
+        }
+    }
+
+    private static void writeVertex(Louvain lv, IntSet hs, BufferedWriter writer, int rawNode) throws IOException
+    {
+        if (!hs.contains(rawNode))
+        {
+            final int nodeLeftId = hs.size();
+            final int clusterId = find(nodeLeftId, lv.nodes);
+            hs.add(rawNode);
+            writer.write(rawNode + "," + clusterId + "," + lv.nodes[clusterId].count);
+            writer.write("," + lv.nodes[clusterId].kin);
+            writer.write("," + lv.nodes[clusterId].kout);
+            writer.write(System.lineSeparator());
         }
     }
 
