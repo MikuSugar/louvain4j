@@ -10,7 +10,9 @@ G = nx.Graph()
 # 从边文件中添加边
 with open(edge_path, 'r') as edge_file:
     for line in edge_file:
-        u, v = line.strip().split()
+        strs = line.strip().split()
+        u = strs[0]
+        v = strs[1]
         G.add_edge(u, v)
 
 # 从点文件中添加节点和社区信息
