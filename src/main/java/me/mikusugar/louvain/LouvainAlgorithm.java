@@ -176,7 +176,7 @@ public class LouvainAlgorithm
         weight = new double[lv.nlen];
         Arrays.fill(ids, -1);
         stageTwo = 0;
-        while (true)
+        do
         {
             cct = 0;
             for (int i = 0; i < lv.clen; i++)
@@ -236,11 +236,7 @@ public class LouvainAlgorithm
                 }
             }
             logger.info("One iteration inner first stage, changed nodes: " + cct);
-            if (cct == 0)
-            {
-                break;
-            }
-        }
+        } while (cct != 0);
         return stageTwo;
     }
 
