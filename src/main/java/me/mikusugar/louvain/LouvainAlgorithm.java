@@ -4,6 +4,8 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Arrays;
@@ -14,6 +16,7 @@ import java.util.Arrays;
  */
 public class LouvainAlgorithm
 {
+    private static final Logger logger = LoggerFactory.getLogger(LouvainAlgorithm.class);
 
     private static void mallocLouvain(Louvain lv)
     {
@@ -221,7 +224,7 @@ public class LouvainAlgorithm
                 {
                     if (maxId == -1)
                     {
-                        System.err.println("This cannot be, something must be wrong");
+                        logger.error("This cannot be, something must be wrong");
                         return 0;
                     }
                     removeNodeFromComm(lv, ci, cwei);
@@ -230,7 +233,7 @@ public class LouvainAlgorithm
                     stageTwo = 1;
                 }
             }
-            System.err.println("One iteration inner first stage, changed nodes: " + cct);
+            logger.info("One iteration inner first stage, changed nodes: " + cct);
             if (cct == 0)
             {
                 break;
@@ -304,7 +307,7 @@ public class LouvainAlgorithm
         while (firstStage(lv) > 0)
         {
             secondStage(lv);
-            System.err.println("Community count: " + lv.clen + " after one pass");
+            logger.info("Community count: " + lv.clen + " after one pass");
         }
     }
 

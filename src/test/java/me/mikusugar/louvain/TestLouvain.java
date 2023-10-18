@@ -1,6 +1,8 @@
 package me.mikusugar.louvain;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -12,6 +14,8 @@ import java.nio.file.Paths;
  */
 public class TestLouvain
 {
+    private static final Logger logger = LoggerFactory.getLogger(TestLouvain.class);
+
     public static String getResourcePath()
     {
         Path resourceDirectory = Paths.get("src", "test", "resources");
@@ -24,12 +28,12 @@ public class TestLouvain
         final String input = getResourcePath() + "/" + "p2p-31.csv";
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
         assert louvain != null;
-        System.out.println("计算前模块度：" + LouvainAlgorithm.calcModularity(louvain));
+        logger.info("pre-calculation modularity：" + LouvainAlgorithm.calcModularity(louvain));
         LouvainAlgorithm.learnLouvain(louvain);
         // Do something with the results
         LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
         final double modularity = LouvainAlgorithm.calcModularity(louvain);
-        System.out.println("计算后模块度：" + modularity);
+        logger.info("post-calculated modularity：" + modularity);
         assert modularity >= 0.3 && modularity <= 0.7;
         LouvainAlgorithm.clear(louvain);
     }
@@ -41,12 +45,12 @@ public class TestLouvain
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
         assert louvain != null;
 
-        System.out.println("计算前模块度：" + LouvainAlgorithm.calcModularity(louvain));
+        logger.info("pre-calculation modularity：" + LouvainAlgorithm.calcModularity(louvain));
         LouvainAlgorithm.learnLouvain(louvain);
         // Do something with the results
         LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
         final double modularity = LouvainAlgorithm.calcModularity(louvain);
-        System.out.println("计算后模块度：" + modularity);
+        logger.info("post-calculated modularity：" + modularity);
         assert modularity >= 0.3 && modularity <= 0.7;
         LouvainAlgorithm.clear(louvain);
     }
