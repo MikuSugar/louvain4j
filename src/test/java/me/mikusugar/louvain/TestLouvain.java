@@ -23,13 +23,15 @@ public class TestLouvain
     {
         final String input = getResourcePath() + "/" + "p2p-31.csv";
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
-        if (louvain != null)
-        {
-            LouvainAlgorithm.learnLouvain(louvain);
-            // Do something with the results
-            LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
-            LouvainAlgorithm.clear(louvain);
-        }
+        assert louvain != null;
+        System.out.println("计算前模块度：" + LouvainAlgorithm.calcModularity(louvain));
+        LouvainAlgorithm.learnLouvain(louvain);
+        // Do something with the results
+        LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
+        final double modularity = LouvainAlgorithm.calcModularity(louvain);
+        System.out.println("计算后模块度：" + modularity);
+        assert modularity >= 0.3 && modularity <= 0.7;
+        LouvainAlgorithm.clear(louvain);
     }
 
     @Test
@@ -37,13 +39,16 @@ public class TestLouvain
     {
         final String input = getResourcePath() + "/" + "club.txt";
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
-        if (louvain != null)
-        {
-            LouvainAlgorithm.learnLouvain(louvain);
-            // Do something with the results
-            LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
-            LouvainAlgorithm.clear(louvain);
-        }
+        assert louvain != null;
+
+        System.out.println("计算前模块度：" + LouvainAlgorithm.calcModularity(louvain));
+        LouvainAlgorithm.learnLouvain(louvain);
+        // Do something with the results
+        LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
+        final double modularity = LouvainAlgorithm.calcModularity(louvain);
+        System.out.println("计算后模块度：" + modularity);
+        assert modularity >= 0.3 && modularity <= 0.7;
+        LouvainAlgorithm.clear(louvain);
     }
 
     /**

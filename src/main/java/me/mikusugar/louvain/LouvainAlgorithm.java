@@ -362,4 +362,15 @@ public class LouvainAlgorithm
         }
     }
 
+    public static double calcModularity(Louvain lv)
+    {
+        double modularity = 0.0;
+        for (int k = 0; k < lv.clen; k++)
+        {
+            int i = lv.cindex[k];
+            modularity += lv.nodes[i].kin / (2 * lv.sumw) - Math.pow(lv.nodes[i].clstot / (2 * lv.sumw), 2);
+        }
+        return modularity;
+    }
+
 }
