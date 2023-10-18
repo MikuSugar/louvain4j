@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.lucene.util.RamUsageEstimator;
 
 import java.io.*;
 import java.util.Arrays;
@@ -106,6 +107,7 @@ public class LouvainAlgorithm
                 linkEdge(lv, right, left, ei, weight);
                 ei++;
             }
+            logger.info("memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
             return lv;
         }
     }
