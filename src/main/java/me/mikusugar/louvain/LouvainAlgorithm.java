@@ -302,10 +302,12 @@ public class LouvainAlgorithm
 
     public static void learnLouvain(Louvain lv)
     {
+        int it = 0;
         while (firstStage(lv) > 0)
         {
             secondStage(lv);
-            logger.info("Community count: " + lv.clen + " after one pass");
+            logger.info("it: {},community count: {} after one pass,current modularity: {}", ++it, lv.clen,
+                    calcModularity(lv));
         }
     }
 
