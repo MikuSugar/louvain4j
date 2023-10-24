@@ -35,4 +35,6 @@ public class Louvain
     public Edge[] edges;
 
     public String input;
+
+    public long fileCount;
 }

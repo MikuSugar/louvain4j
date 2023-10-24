@@ -4,12 +4,17 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import me.mikusugar.louvain.utils.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.lucene.util.RamUsageEstimator;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.jar.JarEntry;
+import java.util.stream.Stream;
 
 /**
  * @author mikusugar
@@ -62,14 +67,37 @@ public class LouvainAlgorithm
     public static Louvain createLouvain(String input) throws IOException
     {
         Int2IntMap hs = new Int2IntOpenHashMap();
+        long fileCount;
+        try (Stream<String> s = Files.lines(Paths.get(input)))
+        {
+            fileCount = s.count();
+            logger.info("file line count:{}", fileCount);
+        }
         Louvain lv = new Louvain();
         lv.input = input;
+        lv.fileCount = fileCount;
         int l = 0, ei = 0;
+
+        int cnt = 0;
+
         try (BufferedReader reader = new BufferedReader(new FileReader(input)))
         {
+            ProgressTracker preReadTracker = new ProgressTracker(fileCount);
+            preReadTracker.start();
             String line;
             while ((line = reader.readLine()) != null)
             {
+                cnt++;
+                if (cnt % 10_0000 == 0)
+                {
+                    preReadTracker.setCurrent(cnt);
+                    logger.info("pre-read progress:{},etc:{}", preReadTracker.getHumanFriendlyProgress(),
+                            preReadTracker.getHumanFriendlyEtcTime());
+                }
+                if (line.startsWith("#"))
+                {
+                    continue;
+                }
                 String[] tokens = line.trim().split("[\\s　]+");
                 final int v1 = Integer.parseInt(tokens[0]);
                 final int v2 = Integer.parseInt(tokens[1]);
@@ -83,18 +111,32 @@ public class LouvainAlgorithm
                 }
                 l++;
             }
+            logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
             lv.clen = hs.size();
             lv.elen = l * 2;
             lv.nlen = lv.clen;
             lv.olen = lv.elen;
             mallocLouvain(lv);
-
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(input)))
         {
             String line;
+            cnt = 0;
+            ProgressTracker initTracker = new ProgressTracker(fileCount);
+            initTracker.start();
             while ((line = reader.readLine()) != null)
             {
+                cnt++;
+                if (cnt % 10_0000 == 0)
+                {
+                    initTracker.setCurrent(cnt);
+                    logger.info("init progress:{},etc:{}", initTracker.getHumanFriendlyProgress(),
+                            initTracker.getHumanFriendlyEtcTime());
+                }
+                if (line.startsWith("#"))
+                {
+                    continue;
+                }
                 String[] tokens = line.trim().split("[\\s　]+");
                 int left = hs.get(Integer.parseInt(tokens[0]));
                 int right = hs.get(Integer.parseInt(tokens[1]));
@@ -107,6 +149,7 @@ public class LouvainAlgorithm
                 linkEdge(lv, right, left, ei, weight);
                 ei++;
             }
+            logger.info("init success. take time:{}", initTracker.getHumanFriendlyElapsedTime());
             logger.info("memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
             return lv;
         }
@@ -236,7 +279,7 @@ public class LouvainAlgorithm
                 }
             }
             logger.info("One iteration inner first stage, changed nodes: " + cct);
-        } while (cct != 0);
+        } while (cct * 1d / lv.clen >= 0.001);
         return stageTwo;
     }
 
@@ -319,16 +362,32 @@ public class LouvainAlgorithm
                 BufferedWriter writer = new BufferedWriter(new FileWriter(out))
         )
         {
+            ProgressTracker tracker = new ProgressTracker(lv.fileCount);
+            tracker.start();
+            int cnt = 0;
             writer.write("node,CommunityID,CommunityCount,kin,kout");
             writer.write(System.lineSeparator());
             while (reader.ready())
             {
-                final String[] strs = reader.readLine().trim().split("[\\s　]+");
+                cnt++;
+                if (cnt % 10_0000 == 0)
+                {
+                    tracker.setCurrent(cnt);
+                    logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
+                            tracker.getHumanFriendlyEtcTime());
+                }
+                final String line = reader.readLine();
+                if (line.startsWith("#"))
+                {
+                    continue;
+                }
+                final String[] strs = line.trim().split("[\\s　]+");
                 final int nodeLeft = Integer.parseInt(strs[0]);
                 final int nodeRight = Integer.parseInt(strs[1]);
                 writeVertex(lv, hs, writer, nodeLeft);
                 writeVertex(lv, hs, writer, nodeRight);
             }
+            logger.info("write success,take time:{}", tracker.getHumanFriendlyElapsedTime());
         }
     }
 
