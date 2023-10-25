@@ -149,7 +149,9 @@ public class LouvainAlgorithm
                 ei++;
             }
             logger.info("init success. take time:{}", initTracker.getHumanFriendlyElapsedTime());
-            logger.info("memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
+            logger.info("memory usage nodes:{},edges:{}", RamUsageEstimator.humanSizeOf(lv.nodes),
+                    RamUsageEstimator.humanSizeOf(lv.edges));
+            logger.info("total memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
             return lv;
         }
     }
