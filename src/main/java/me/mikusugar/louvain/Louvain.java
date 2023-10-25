@@ -32,7 +32,12 @@ public class Louvain
      */
     public Node[] nodes;
 
-    public Edge[] edges;
+    /****************
+     * edge
+     * left right next weight
+     ****************/
+
+    public Edge edge;
 
     public String input;
 

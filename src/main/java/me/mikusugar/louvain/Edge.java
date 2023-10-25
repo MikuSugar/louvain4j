@@ -6,19 +6,53 @@ package me.mikusugar.louvain;
  */
 public class Edge
 {
-    //left <------ right
-    
-    int left;
+    private final double[] edgeWeights;
 
-    int right;
+    private final int[] edgeInfos;
 
-    /**
-     * next neighbor index for node left
-     */
-    int next;
+    public Edge(int size)
+    {
+        this.edgeWeights = new double[size];
+        this.edgeInfos = new int[3 * size];
+    }
 
-    /**
-     * edge weight from right to left
-     */
-    double weight;
+    public void setLeft(int idx, int leftValue)
+    {
+        this.edgeInfos[idx * 3] = leftValue;
+    }
+
+    public void setRight(int idx, int rightValue)
+    {
+        this.edgeInfos[idx * 3 + 1] = rightValue;
+    }
+
+    public void setNext(int idx, int nextValue)
+    {
+        this.edgeInfos[idx * 3 + 2] = nextValue;
+    }
+
+    public void setWeight(int idx, double weight)
+    {
+        this.edgeWeights[idx] = weight;
+    }
+
+    public int getLeft(int idx)
+    {
+        return this.edgeInfos[idx * 3];
+    }
+
+    public int getRight(int idx)
+    {
+        return this.edgeInfos[idx * 3 + 1];
+    }
+
+    public int getNext(int idx)
+    {
+        return this.edgeInfos[idx * 3 + 2];
+    }
+
+    public double getWeight(int idx)
+    {
+        return this.edgeWeights[idx];
+    }
 }
