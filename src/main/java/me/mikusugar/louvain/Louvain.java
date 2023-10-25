@@ -30,13 +30,11 @@ public class Louvain
     /**
      * 点集合
      */
-    public Node[] nodes;
+    public Node node;
 
-    /****************
-     * edge
-     * left right next weight
-     ****************/
-
+    /**
+     * 边集合
+     */
     public Edge edge;
 
     public String input;

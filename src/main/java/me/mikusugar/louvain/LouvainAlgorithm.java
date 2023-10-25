@@ -27,11 +27,10 @@ public class LouvainAlgorithm
     {
         lv.cindex = new int[lv.clen];
         Arrays.fill(lv.cindex, -1);
-        lv.nodes = new Node[lv.clen];
+        lv.node = new Node(lv.clen);
         for (int i = 0; i < lv.clen; i++)
         {
-            lv.nodes[i] = new Node();
-            lv.nodes[i].eindex = -1;
+            lv.node.setEindex(i, -1);
         }
         lv.edge = new Edge(lv.elen);
     }
@@ -41,16 +40,16 @@ public class LouvainAlgorithm
         if (lv.cindex[i] == -1)
         {
             lv.cindex[i] = i;
-            lv.nodes[i].count = 1;
-            lv.nodes[i].kin = 0;
-            lv.nodes[i].clskin = 0;
-            lv.nodes[i].clsid = i;
-            lv.nodes[i].first = -1;
-            lv.nodes[i].prev = -1;
-            lv.nodes[i].next = -1;
+            lv.node.setCount(i, 1);
+            lv.node.setKin(i, 0);
+            lv.node.setClskin(i, 0);
+            lv.node.setClsid(i, i);
+            lv.node.setFirst(i, -1);
+            lv.node.setPrev(i, -1);
+            lv.node.setNext(i, -1);
         }
-        lv.nodes[i].kout += weight;
-        lv.nodes[i].clstot += weight;
+        lv.node.setKout(i, lv.node.getKout(i) + weight);
+        lv.node.setClstot(i, lv.node.getClstot(i) + weight);
     }
 
     private static void linkEdge(Louvain lv, int l, int r, int ei, double weight)
@@ -58,8 +57,8 @@ public class LouvainAlgorithm
         lv.edge.setLeft(ei, l);
         lv.edge.setRight(ei, r);
         lv.edge.setWeight(ei, weight);
-        lv.edge.setNext(ei, lv.nodes[l].eindex);
-        lv.nodes[l].eindex = ei;
+        lv.edge.setNext(ei, lv.node.getEindex(l));
+        lv.node.setEindex(l, ei);
     }
 
     public static Louvain createLouvain(String input) throws IOException
@@ -148,7 +147,7 @@ public class LouvainAlgorithm
                 ei++;
             }
             logger.info("init success. take time:{}", initTracker.getHumanFriendlyElapsedTime());
-            logger.info("memory usage nodes:{},edges:{}", RamUsageEstimator.humanSizeOf(lv.nodes),
+            logger.info("memory usage nodes:{},edges:{}", RamUsageEstimator.humanSizeOf(lv.node),
                     RamUsageEstimator.humanSizeOf(lv.edge));
             logger.info("total memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
             return lv;
@@ -157,54 +156,56 @@ public class LouvainAlgorithm
 
     private static void addNodeToComm(Louvain lv, int id, int cid, double weight)
     {
-        lv.nodes[id].clsid = cid;
-        lv.nodes[id].next = lv.nodes[cid].next;
-        lv.nodes[cid].next = id;
-        lv.nodes[id].prev = cid;
-        if (lv.nodes[id].next != -1)
+        final Node node = lv.node;
+        node.setClsid(id, cid);
+        node.setNext(id, node.getNext(cid));
+        node.setNext(cid, id);
+        node.setPrev(id, cid);
+        if (node.getNext(id) != -1)
         {
-            lv.nodes[lv.nodes[id].next].prev = id;
+            node.setPrev(node.getNext(id), id);
         }
-        lv.nodes[cid].count += lv.nodes[id].count;
-        lv.nodes[cid].clstot += lv.nodes[id].clstot;
-        lv.nodes[cid].clskin += lv.nodes[id].kin + 2 * weight;
+        node.setCount(cid, node.getCount(cid) + node.getCount(id));
+        node.setClstot(cid, node.getClstot(cid) + node.getClstot(id));
+        node.setClskin(cid, node.getClskin(cid) + node.getKin(id) + 2 * weight);
     }
 
     private static void removeNodeFromComm(Louvain lv, int id, double weight)
     {
-        int cid = lv.nodes[id].clsid;
+        final Node node = lv.node;
+        int cid = node.getClsid(id);
         int prev, next;
         if (cid != id)
         {
-            prev = lv.nodes[id].prev;
-            next = lv.nodes[id].next;
-            lv.nodes[prev].next = next;
+            prev = node.getPrev(id);
+            next = node.getNext(id);
+            node.setNext(prev, next);
             if (next != -1)
             {
-                lv.nodes[next].prev = prev;
+                node.setPrev(next, prev);
             }
-            lv.nodes[cid].count -= lv.nodes[id].count;
-            lv.nodes[cid].clstot -= lv.nodes[id].clstot;
-            lv.nodes[cid].clskin -= lv.nodes[id].kin + 2 * weight;
+            node.setCount(cid, node.getCount(cid) - node.getCount(id));
+            node.setClstot(cid, node.getClstot(cid) - node.getClstot(id));
+            node.setClskin(cid, node.getClskin(cid) - (node.getKin(id) + 2 * weight));
         }
         else
         {
-            next = lv.nodes[id].next;
+            next = node.getNext(id);
             cid = next;
             if (next != -1)
             {
-                lv.nodes[next].prev = -1;
-                lv.nodes[next].clsid = next;
-                while (-1 != (next = lv.nodes[next].next))
+                node.setPrev(next, -1);
+                node.setClsid(next, next);
+                while (-1 != (next = node.getNext(next)))
                 {
-                    lv.nodes[cid].count += lv.nodes[next].count;
-                    lv.nodes[next].clsid = cid;
+                    node.setCount(cid, node.getCount(cid) + node.getCount(next));
+                    node.setClsid(next, cid);
                 }
-                lv.nodes[cid].clstot = lv.nodes[id].clstot - lv.nodes[id].kin - lv.nodes[id].kout;
-                lv.nodes[cid].clskin = lv.nodes[id].clskin - lv.nodes[id].kin - 2 * weight;
-                lv.nodes[id].count -= lv.nodes[cid].count;
-                lv.nodes[id].clskin = lv.nodes[id].kin;
-                lv.nodes[id].clstot -= lv.nodes[cid].clstot;
+                node.setClstot(cid, node.getClstot(id) - node.getKin(id) - node.getKout(id));
+                node.setClskin(cid, node.getClskin(id) - node.getKin(id) - 2 * weight);
+                node.setCount(id, node.getCount(id) - node.getCount(cid));
+                node.setClskin(id, node.getKin(id));
+                node.setClstot(id, node.getClstot(id) - node.getClstot(cid));
             }
         }
     }
@@ -225,15 +226,15 @@ public class LouvainAlgorithm
             for (int i = 0; i < lv.clen; i++)
             {
                 int ci = lv.cindex[i];
-                double kv = lv.nodes[ci].kin + lv.nodes[ci].kout;
-                int cid = lv.nodes[ci].clsid;
-                int ei = lv.nodes[ci].eindex;
+                double kv = lv.node.getKin(ci) + lv.node.getKout(ci);
+                int cid = lv.node.getClsid(ci);
+                int ei = lv.node.getEindex(ci);
                 idc = 0;
                 while (ei != -1)
                 {
                     int wi = lv.edge.getRight(ei);
                     double wei = lv.edge.getWeight(ei);
-                    int wci = lv.nodes[wi].clsid;
+                    int wci = lv.node.getClsid(wi);
                     weight[wci] += wei;
                     ids[idc++] = wci;
                     ei = lv.edge.getNext(ei);
@@ -249,12 +250,12 @@ public class LouvainAlgorithm
                         double deltaQ;
                         if (cid == ids[j])
                         {
-                            deltaQ = weight[ids[j]] - kv * (lv.nodes[ids[j]].clstot - kv) / lv.sumw;
+                            deltaQ = weight[ids[j]] - kv * (lv.node.getClstot(ids[j]) - kv) / lv.sumw;
                             cwei = weight[ids[j]];
                         }
                         else
                         {
-                            deltaQ = weight[ids[j]] - kv * lv.nodes[ids[j]].clstot / lv.sumw;
+                            deltaQ = weight[ids[j]] - kv * lv.node.getClstot(ids[j]) / lv.sumw;
                         }
                         if (deltaQ > maxDeltaQ)
                         {
@@ -290,53 +291,53 @@ public class LouvainAlgorithm
         for (int i = 0; i < lv.clen; i++)
         {
             int ci = lv.cindex[i];
-            if (lv.nodes[ci].clsid == ci)
+            if (lv.node.getClsid(ci) == ci)
             {
                 lv.cindex[tclen++] = ci;
-                int next = lv.nodes[ci].next;
-                int first = lv.nodes[ci].first;
+                int next = lv.node.getNext(ci);
+                int first = lv.node.getFirst(ci);
                 if (first != -1)
                 {
-                    while (lv.nodes[first].next != -1)
+                    while (lv.node.getNext(first) != -1)
                     {
-                        first = lv.nodes[first].next;
+                        first = lv.node.getNext(first);
                     }
-                    lv.nodes[first].next = next;
+                    lv.node.setNext(first, next);
                 }
                 else
                 {
-                    lv.nodes[ci].first = next;
+                    lv.node.setFirst(ci, next);
                 }
                 if (next != -1)
                 {
-                    lv.nodes[next].prev = first;
+                    lv.node.setPrev(next, first);
                 }
-                lv.nodes[ci].next = -1;
-                lv.nodes[ci].prev = -1;
+                lv.node.setNext(ci, -1);
+                lv.node.setPrev(ci, -1);
             }
         }
         lv.clen = tclen;
         for (int i = 0; i < lv.clen; i++)
         {
             int ci = lv.cindex[i];
-            lv.nodes[ci].kin = lv.nodes[ci].clskin;
-            lv.nodes[ci].kout = lv.nodes[ci].clstot - lv.nodes[ci].kin;
-            lv.nodes[ci].eindex = -1;
+            lv.node.setKin(ci, lv.node.getClskin(ci));
+            lv.node.setKout(ci, lv.node.getClstot(ci) - lv.node.getKin(ci));
+            lv.node.setEindex(ci, -1);
         }
         for (int i = 0; i < lv.elen; i++)
         {
             int l = lv.edge.getLeft(i);
             int r = lv.edge.getRight(i);
             double w = lv.edge.getWeight(i);
-            int lcid = lv.nodes[l].clsid;
-            int rcid = lv.nodes[r].clsid;
+            int lcid = lv.node.getClsid(l);
+            int rcid = lv.node.getClsid(r);
             if (lcid != rcid)
             {
                 lv.edge.setLeft(telen, lcid);
                 lv.edge.setRight(telen, rcid);
                 lv.edge.setWeight(telen, w);
-                lv.edge.setNext(telen, lv.nodes[lcid].eindex);
-                lv.nodes[lcid].eindex = telen++;
+                lv.edge.setNext(telen, lv.node.getEindex(lcid));
+                lv.node.setEindex(lcid, telen++);
             }
         }
         lv.elen = telen;
@@ -355,7 +356,7 @@ public class LouvainAlgorithm
 
     public static void saveLouvain(Louvain lv, String out) throws IOException
     {
-        IntSet hs = new IntOpenHashSet(lv.nodes.length);
+        IntSet hs = new IntOpenHashSet(lv.node.size);
         try (
                 BufferedReader reader = new BufferedReader(new FileReader(lv.input));
                 BufferedWriter writer = new BufferedWriter(new FileWriter(out))
@@ -395,22 +396,22 @@ public class LouvainAlgorithm
         if (!hs.contains(rawNode))
         {
             final int nodeLeftId = hs.size();
-            final int clusterId = find(nodeLeftId, lv.nodes);
+            final int clusterId = find(nodeLeftId, lv.node);
             hs.add(rawNode);
-            writer.write(rawNode + "," + clusterId + "," + lv.nodes[clusterId].count);
-            writer.write("," + lv.nodes[clusterId].kin);
-            writer.write("," + lv.nodes[clusterId].kout);
+            writer.write(rawNode + "," + clusterId + "," + lv.node.getCount(clusterId));
+            writer.write("," + lv.node.getKin(clusterId));
+            writer.write("," + lv.node.getKout(clusterId));
             writer.write(System.lineSeparator());
         }
     }
 
-    private static int find(int idx, Node[] nodes)
+    private static int find(int idx, Node node)
     {
-        if (nodes[idx].clsid == idx)
+        if (node.getClsid(idx) == idx)
         {
             return idx;
         }
-        return nodes[idx].clsid = find(nodes[idx].clsid, nodes);
+        return find(node.getClsid(idx), node);
     }
 
     public static void clear(Louvain lv)
@@ -418,7 +419,7 @@ public class LouvainAlgorithm
         if (lv != null)
         {
             lv.cindex = null;
-            lv.nodes = null;
+            lv.node = null;
             lv.edge = null;
         }
     }
@@ -429,7 +430,7 @@ public class LouvainAlgorithm
         for (int k = 0; k < lv.clen; k++)
         {
             int i = lv.cindex[k];
-            modularity += lv.nodes[i].kin / (2 * lv.sumw) - Math.pow(lv.nodes[i].clstot / (2 * lv.sumw), 2);
+            modularity += lv.node.getKin(i) / (2 * lv.sumw) - Math.pow(lv.node.getClstot(i) / (2 * lv.sumw), 2);
         }
         return modularity;
     }
