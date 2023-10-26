@@ -52,7 +52,7 @@ public class LouvainAlgorithm
         lv.node.setClstot(i, lv.node.getClstot(i) + weight);
     }
 
-    private static void linkEdge(Louvain lv, int l, int r, int ei, double weight)
+    private static void linkEdge(Louvain lv, int l, int r, long ei, double weight)
     {
         lv.edge.setLeft(ei, l);
         lv.edge.setRight(ei, r);
@@ -79,7 +79,7 @@ public class LouvainAlgorithm
         Louvain lv = new Louvain();
         lv.input = edgeFile;
         lv.fileCount = edgeFileCount;
-        int l = 0, ei = 0;
+        long l = 0, ei = 0;
 
         int cnt = 0;
 
@@ -159,7 +159,7 @@ public class LouvainAlgorithm
                 }
                 logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
                 lv.clen = hs.size();
-                lv.elen = (int)(edgeFileCount * 2);
+                lv.elen = edgeFileCount * 2;
                 lv.nlen = lv.clen;
                 lv.olen = lv.elen;
                 mallocLouvain(lv);
@@ -279,7 +279,7 @@ public class LouvainAlgorithm
                 int ci = lv.cindex[i];
                 double kv = lv.node.getKin(ci) + lv.node.getKout(ci);
                 int cid = lv.node.getClsid(ci);
-                int ei = lv.node.getEindex(ci);
+                long ei = lv.node.getEindex(ci);
                 idc = 0;
                 while (ei != -1)
                 {

@@ -11,20 +11,23 @@ public class Node
     public Node(int size)
     {
         this.size = size;
-        this.infos1 = new int[size * 6];
+        this.infos1 = new int[size * 5];
         this.infos2 = new double[size * 4];
+        this.infos3 = new long[size];
     }
 
     private final int[] infos1;
 
     private final double[] infos2;
 
+    private final long[] infos3;
+
     /**
      * 社区内的节点个数
      */
     public void setCount(int idx, int count)
     {
-        infos1[idx * 6] = count;
+        infos1[idx * 5] = count;
     }
 
     /**
@@ -32,7 +35,7 @@ public class Node
      */
     public int getCount(int idx)
     {
-        return infos1[idx * 6];
+        return infos1[idx * 5];
     }
 
     /**
@@ -40,7 +43,7 @@ public class Node
      */
     public void setClsid(int idx, int clsid)
     {
-        infos1[idx * 6 + 1] = clsid;
+        infos1[idx * 5 + 1] = clsid;
     }
 
     /**
@@ -48,7 +51,7 @@ public class Node
      */
     public int getClsid(int idx)
     {
-        return infos1[idx * 6 + 1];
+        return infos1[idx * 5 + 1];
     }
 
     /**
@@ -56,7 +59,7 @@ public class Node
      */
     public void setNext(int idx, int next)
     {
-        infos1[idx * 6 + 2] = next;
+        infos1[idx * 5 + 2] = next;
     }
 
     /**
@@ -64,7 +67,7 @@ public class Node
      */
     public int getNext(int idx)
     {
-        return infos1[idx * 6 + 2];
+        return infos1[idx * 5 + 2];
     }
 
     /**
@@ -72,7 +75,7 @@ public class Node
      */
     public void setPrev(int idx, int prev)
     {
-        infos1[idx * 6 + 3] = prev;
+        infos1[idx * 5 + 3] = prev;
     }
 
     /**
@@ -80,7 +83,7 @@ public class Node
      */
     public int getPrev(int idx)
     {
-        return infos1[idx * 6 + 3];
+        return infos1[idx * 5 + 3];
     }
 
     /**
@@ -88,7 +91,7 @@ public class Node
      */
     public void setFirst(int idx, int first)
     {
-        infos1[idx * 6 + 4] = first;
+        infos1[idx * 5 + 4] = first;
     }
 
     /**
@@ -96,23 +99,23 @@ public class Node
      */
     public int getFirst(int idx)
     {
-        return infos1[idx * 6 + 4];
+        return infos1[idx * 5 + 4];
     }
 
     /**
      * 节点邻居链表的第一个指针，该链表下的所有left，都是本节点自己
      */
-    public void setEindex(int idx, int eindex)
+    public void setEindex(int idx, long eindex)
     {
-        infos1[idx * 6 + 5] = eindex;
+        infos3[idx] = eindex;
     }
 
     /**
      * 节点邻居链表的第一个指针，该链表下的所有left，都是本节点自己
      */
-    public int getEindex(int idx)
+    public long getEindex(int idx)
     {
-        return infos1[idx * 6 + 5];
+        return infos3[idx];
     }
 
     /**

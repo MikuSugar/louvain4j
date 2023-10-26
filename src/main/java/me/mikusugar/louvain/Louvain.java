@@ -11,11 +11,11 @@ public class Louvain
      */
     public int clen;
 
-    public int elen;
+    public long elen;
 
     public int nlen;
 
-    public int olen;
+    public long olen;
 
     /**
      * 社区代表点索引
