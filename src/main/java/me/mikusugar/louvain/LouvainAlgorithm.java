@@ -19,6 +19,7 @@ import java.util.stream.Stream;
  * @author mikusugar
  * @version 1.0, 2023/10/16 15:58
  */
+@SuppressWarnings ("DuplicatedCode")
 public class LouvainAlgorithm
 {
     private static final Logger logger = LoggerFactory.getLogger(LouvainAlgorithm.class);
@@ -117,6 +118,7 @@ public class LouvainAlgorithm
                     l++;
                 }
                 logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
+                logger.info("id mapping memory usage:{}", RamUsageEstimator.humanSizeOf(hs));
                 lv.clen = hs.size();
                 lv.elen = l * 2;
                 lv.nlen = lv.clen;
@@ -158,6 +160,7 @@ public class LouvainAlgorithm
                     }
                 }
                 logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
+                logger.info("id mapping memory usage:{}", RamUsageEstimator.humanSizeOf(hs));
                 lv.clen = hs.size();
                 lv.elen = edgeFileCount * 2;
                 lv.nlen = lv.clen;
@@ -165,9 +168,7 @@ public class LouvainAlgorithm
                 mallocLouvain(lv);
             }
         }
-        logger.info("memory usage nodes:{},edges:{}", RamUsageEstimator.humanSizeOf(lv.node),
-                RamUsageEstimator.humanSizeOf(lv.edge));
-        logger.info("total memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
+        logger.info("graph total memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
         try (BufferedReader reader = new BufferedReader(new FileReader(edgeFile)))
         {
             String line;

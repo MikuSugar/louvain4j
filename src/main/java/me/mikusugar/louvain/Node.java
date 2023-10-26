@@ -1,5 +1,9 @@
 package me.mikusugar.louvain;
 
+import org.apache.lucene.util.RamUsageEstimator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author mikusugar
  * @version 1.0, 2023/10/25 15:09
@@ -8,12 +12,21 @@ public class Node
 {
     public final int size;
 
+    private static final Logger logger = LoggerFactory.getLogger(Node.class);
+
     public Node(int size)
     {
+        logger.info("node is applying for memory.");
         this.size = size;
         this.infos1 = new int[size * 5];
+        logger.info("memory has been applied:{}", RamUsageEstimator.humanSizeOf(infos1));
         this.infos2 = new double[size * 4];
+        logger.info("memory has been applied:{}", RamUsageEstimator.humanReadableUnits(
+                RamUsageEstimator.sizeOf(infos1) + RamUsageEstimator.sizeOf(infos2)));
         this.infos3 = new long[size];
+        logger.info("memory usage:{}", RamUsageEstimator.humanReadableUnits(
+                RamUsageEstimator.sizeOf(infos1) + RamUsageEstimator.sizeOf(infos2) + RamUsageEstimator.sizeOf(
+                        infos3)));
     }
 
     private final int[] infos1;

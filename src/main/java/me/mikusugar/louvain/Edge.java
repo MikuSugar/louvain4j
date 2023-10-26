@@ -3,6 +3,9 @@ package me.mikusugar.louvain;
 import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import org.apache.lucene.util.RamUsageEstimator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author mikusugar
@@ -16,23 +19,32 @@ public class Edge
 
     private final LongBigArrayBigList edgeInfos1;
 
+    private static final Logger logger = LoggerFactory.getLogger(Edge.class);
+
     public Edge(long size)
     {
+        logger.info("edge is applying for memory.");
         this.edgeInfos = new IntBigArrayBigList(size * 2);
         for (int i = 0; i < size * 2; i++)
         {
             edgeInfos.add(0);
         }
+        logger.info("memory has been applied:{}", RamUsageEstimator.humanSizeOf(edgeInfos));
         this.edgeWeights = new DoubleBigArrayBigList(size);
         for (int i = 0; i < size; i++)
         {
             edgeWeights.add(0d);
         }
+        logger.info("memory has been applied:{}", RamUsageEstimator.humanReadableUnits(
+                RamUsageEstimator.sizeOf(edgeInfos) + RamUsageEstimator.sizeOf(edgeWeights)));
         this.edgeInfos1 = new LongBigArrayBigList(size);
         for (int i = 0; i < size; i++)
         {
             edgeInfos1.add(0L);
         }
+        logger.info("memory usage:{}", RamUsageEstimator.humanReadableUnits(
+                RamUsageEstimator.sizeOf(edgeInfos) + RamUsageEstimator.sizeOf(edgeWeights) + RamUsageEstimator.sizeOf(
+                        edgeInfos1)));
     }
 
     public void setLeft(long idx, int leftValue)
