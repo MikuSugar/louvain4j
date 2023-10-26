@@ -37,7 +37,11 @@ public class Louvain
      */
     public Edge edge;
 
-    public String input;
+    public String edgeFile;
 
-    public long fileCount;
+    public long edgeFileCount;
+
+    public String vertexFile;
+
+    public long vertexFileCount;
 }
