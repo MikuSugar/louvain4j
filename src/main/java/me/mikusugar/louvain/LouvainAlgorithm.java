@@ -61,79 +61,129 @@ public class LouvainAlgorithm
         lv.node.setEindex(l, ei);
     }
 
-    public static Louvain createLouvain(String input) throws IOException
+    public static Louvain createLouvain(String edgeFile) throws IOException
+    {
+        return createLouvain(edgeFile, null);
+    }
+
+    public static Louvain createLouvain(String edgeFile, String vertexFile) throws IOException
     {
         Int2IntMap hs = new Int2IntOpenHashMap();
-        long fileCount;
-        logger.info("read file line count...");
-        try (Stream<String> s = Files.lines(Paths.get(input)))
+        long edgeFileCount;
+        logger.info("read edge file line count...");
+        try (Stream<String> s = Files.lines(Paths.get(edgeFile)))
         {
-            fileCount = s.count();
-            logger.info("file line count:{}", fileCount);
+            edgeFileCount = s.filter(line -> !line.startsWith("#")).count();
+            logger.info("edge file line count:{}", edgeFileCount);
         }
         Louvain lv = new Louvain();
-        lv.input = input;
-        lv.fileCount = fileCount;
+        lv.input = edgeFile;
+        lv.fileCount = edgeFileCount;
         int l = 0, ei = 0;
 
         int cnt = 0;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(input)))
+        if (vertexFile == null)
         {
-            ProgressTracker preReadTracker = new ProgressTracker(fileCount);
-            preReadTracker.start();
+            try (BufferedReader reader = new BufferedReader(new FileReader(edgeFile)))
+            {
+                ProgressTracker preReadTracker = new ProgressTracker(edgeFileCount);
+                preReadTracker.start();
+                String line;
+                while ((line = reader.readLine()) != null)
+                {
+                    if (line.startsWith("#"))
+                    {
+                        continue;
+                    }
+                    cnt++;
+                    if (cnt % 10_0000 == 0)
+                    {
+                        preReadTracker.setCurrent(cnt);
+                        logger.info("pre-read progress:{},etc:{}", preReadTracker.getHumanFriendlyProgress(),
+                                preReadTracker.getHumanFriendlyEtcTime());
+                    }
+                    String[] tokens = line.trim().split("[\\s　]+");
+                    final int v1 = Integer.parseInt(tokens[0]);
+                    final int v2 = Integer.parseInt(tokens[1]);
+                    if (!hs.containsKey(v1))
+                    {
+                        hs.put(v1, hs.size());
+                    }
+                    if (!hs.containsKey(v2))
+                    {
+                        hs.put(v2, hs.size());
+                    }
+                    l++;
+                }
+                logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
+                lv.clen = hs.size();
+                lv.elen = l * 2;
+                lv.nlen = lv.clen;
+                lv.olen = lv.elen;
+                mallocLouvain(lv);
+            }
+        }
+        else
+        {
+            try (BufferedReader reader = new BufferedReader(new FileReader(vertexFile)))
+            {
+                long vertexCount;
+                logger.info("read vertex file line count...");
+                try (Stream<String> s = Files.lines(Paths.get(vertexFile)))
+                {
+                    vertexCount = s.filter(line -> !line.startsWith("#")).count();
+                    logger.info("vertex file line count:{}", vertexCount);
+                }
+                ProgressTracker preReadTracker = new ProgressTracker(vertexCount);
+                preReadTracker.start();
+                String line;
+                while ((line = reader.readLine()) != null)
+                {
+                    if (line.startsWith("#"))
+                    {
+                        continue;
+                    }
+                    cnt++;
+                    if (cnt % 10_0000 == 0)
+                    {
+                        preReadTracker.setCurrent(cnt);
+                        logger.info("pre-read progress:{},etc:{}", preReadTracker.getHumanFriendlyProgress(),
+                                preReadTracker.getHumanFriendlyEtcTime());
+                    }
+                    final int v1 = Integer.parseInt(line);
+                    if (!hs.containsKey(v1))
+                    {
+                        hs.put(v1, hs.size());
+                    }
+                }
+                logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
+                lv.clen = hs.size();
+                lv.elen = (int)(edgeFileCount * 2);
+                lv.nlen = lv.clen;
+                lv.olen = lv.elen;
+                mallocLouvain(lv);
+            }
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(edgeFile)))
+        {
             String line;
+            cnt = 0;
+            ProgressTracker initTracker = new ProgressTracker(edgeFileCount);
+            initTracker.start();
             while ((line = reader.readLine()) != null)
             {
-                cnt++;
-                if (cnt % 10_0000 == 0)
-                {
-                    preReadTracker.setCurrent(cnt);
-                    logger.info("pre-read progress:{},etc:{}", preReadTracker.getHumanFriendlyProgress(),
-                            preReadTracker.getHumanFriendlyEtcTime());
-                }
+
                 if (line.startsWith("#"))
                 {
                     continue;
                 }
-                String[] tokens = line.trim().split("[\\s　]+");
-                final int v1 = Integer.parseInt(tokens[0]);
-                final int v2 = Integer.parseInt(tokens[1]);
-                if (!hs.containsKey(v1))
-                {
-                    hs.put(v1, hs.size());
-                }
-                if (!hs.containsKey(v2))
-                {
-                    hs.put(v2, hs.size());
-                }
-                l++;
-            }
-            logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
-            lv.clen = hs.size();
-            lv.elen = l * 2;
-            lv.nlen = lv.clen;
-            lv.olen = lv.elen;
-            mallocLouvain(lv);
-        }
-        try (BufferedReader reader = new BufferedReader(new FileReader(input)))
-        {
-            String line;
-            cnt = 0;
-            ProgressTracker initTracker = new ProgressTracker(fileCount);
-            initTracker.start();
-            while ((line = reader.readLine()) != null)
-            {
                 cnt++;
                 if (cnt % 10_0000 == 0)
                 {
                     initTracker.setCurrent(cnt);
                     logger.info("init progress:{},etc:{}", initTracker.getHumanFriendlyProgress(),
                             initTracker.getHumanFriendlyEtcTime());
-                }
-                if (line.startsWith("#"))
-                {
-                    continue;
                 }
                 String[] tokens = line.trim().split("[\\s　]+");
                 int left = hs.get(Integer.parseInt(tokens[0]));
@@ -370,17 +420,17 @@ public class LouvainAlgorithm
             writer.write(System.lineSeparator());
             while (reader.ready())
             {
+                final String line = reader.readLine();
+                if (line.startsWith("#"))
+                {
+                    continue;
+                }
                 cnt++;
                 if (cnt % 10_0000 == 0)
                 {
                     tracker.setCurrent(cnt);
                     logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
                             tracker.getHumanFriendlyEtcTime());
-                }
-                final String line = reader.readLine();
-                if (line.startsWith("#"))
-                {
-                    continue;
                 }
                 final String[] strs = line.trim().split("[\\s　]+");
                 final int nodeLeft = Integer.parseInt(strs[0]);

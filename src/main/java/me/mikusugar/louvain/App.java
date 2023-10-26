@@ -11,11 +11,12 @@ public class App
 {
     public static void main(String[] args) throws IOException
     {
-        String input = args[0];
-        Louvain louvain = LouvainAlgorithm.createLouvain(input);
+        String edgeFile = args[0];
+        String vertexFile = args.length >= 2 ? args[1] : null;
+        Louvain louvain = LouvainAlgorithm.createLouvain(edgeFile, vertexFile);
         LouvainAlgorithm.learnLouvain(louvain);
         // Do something with the results
-        LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
+        LouvainAlgorithm.saveLouvain(louvain, edgeFile + "_out.txt");
         LouvainAlgorithm.clear(louvain);
     }
 }

@@ -27,7 +27,6 @@ public class TestLouvain
     {
         final String input = getResourcePath() + "/" + "p2p-31.csv";
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
-        assert louvain != null;
         logger.info("pre-calculation modularity：" + LouvainAlgorithm.calcModularity(louvain));
         LouvainAlgorithm.learnLouvain(louvain);
         // Do something with the results
@@ -43,7 +42,6 @@ public class TestLouvain
     {
         final String input = getResourcePath() + "/" + "club.txt";
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
-        assert louvain != null;
 
         logger.info("pre-calculation modularity：" + LouvainAlgorithm.calcModularity(louvain));
         LouvainAlgorithm.learnLouvain(louvain);
