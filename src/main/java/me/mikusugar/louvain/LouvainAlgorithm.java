@@ -165,6 +165,9 @@ public class LouvainAlgorithm
                 mallocLouvain(lv);
             }
         }
+        logger.info("memory usage nodes:{},edges:{}", RamUsageEstimator.humanSizeOf(lv.node),
+                RamUsageEstimator.humanSizeOf(lv.edge));
+        logger.info("total memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
         try (BufferedReader reader = new BufferedReader(new FileReader(edgeFile)))
         {
             String line;
@@ -198,9 +201,6 @@ public class LouvainAlgorithm
                 ei++;
             }
             logger.info("init success. take time:{}", initTracker.getHumanFriendlyElapsedTime());
-            logger.info("memory usage nodes:{},edges:{}", RamUsageEstimator.humanSizeOf(lv.node),
-                    RamUsageEstimator.humanSizeOf(lv.edge));
-            logger.info("total memory usage:{}", RamUsageEstimator.humanSizeOf(lv));
             return lv;
         }
     }
