@@ -11,12 +11,19 @@ public class App
 {
     public static void main(String[] args) throws IOException
     {
-        String edgeFile = args[0];
-        String vertexFile = args.length >= 2 ? args[1] : null;
-        Louvain louvain = LouvainAlgorithm.createLouvain(edgeFile, vertexFile);
-        LouvainAlgorithm.learnLouvain(louvain);
-        // Do something with the results
-        LouvainAlgorithm.saveLouvain(louvain, edgeFile + "_out.txt");
-        LouvainAlgorithm.clear(louvain);
+        Louvain louvain = null;
+        try
+        {
+            String edgeFile = args[0];
+            String vertexFile = args.length >= 2 ? args[1] : null;
+            louvain = LouvainAlgorithm.createLouvain(edgeFile, vertexFile);
+            LouvainAlgorithm.learnLouvain(louvain);
+            LouvainAlgorithm.saveLouvain(louvain, edgeFile + "_out.txt");
+        }
+        finally
+        {
+            LouvainAlgorithm.clear(louvain);
+        }
+
     }
 }
