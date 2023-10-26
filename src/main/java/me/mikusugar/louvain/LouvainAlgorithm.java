@@ -408,6 +408,8 @@ public class LouvainAlgorithm
 
     public static void learnLouvain(Louvain lv)
     {
+        ProgressTracker learnTracker = new ProgressTracker(1);
+        learnTracker.start();
         int it = 0;
         while (firstStage(lv) > 0)
         {
@@ -415,78 +417,80 @@ public class LouvainAlgorithm
             logger.info("it: {},community count: {} after one pass,current modularity: {}", ++it, lv.clen,
                     calcModularity(lv));
         }
+        learnTracker.setCurrent(1);
+        logger.info("learn take time:{}", learnTracker.getHumanFriendlyElapsedTime());
     }
 
     public static void saveLouvain(Louvain lv, String out) throws IOException
     {
         IntSet hs = new IntOpenHashSet(lv.node.size);
-        if(lv.vertexFile==null)
-       {
-           try (
-                   BufferedReader reader = new BufferedReader(new FileReader(lv.edgeFile));
-                   BufferedWriter writer = new BufferedWriter(new FileWriter(out))
-           )
-           {
-               ProgressTracker tracker = new ProgressTracker(lv.edgeFileCount);
-               tracker.start();
-               int cnt = 0;
-               writer.write("node,CommunityID,CommunityCount,kin,kout");
-               writer.write(System.lineSeparator());
-               while (reader.ready())
-               {
-                   final String line = reader.readLine();
-                   if (line.startsWith("#"))
-                   {
-                       continue;
-                   }
-                   cnt++;
-                   if (cnt % 10_0000 == 0)
-                   {
-                       tracker.setCurrent(cnt);
-                       logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
-                               tracker.getHumanFriendlyEtcTime());
-                   }
-                   final String[] strs = line.trim().split("[\\s　]+");
-                   final int nodeLeft = Integer.parseInt(strs[0]);
-                   final int nodeRight = Integer.parseInt(strs[1]);
-                   writeVertex(lv, hs, writer, nodeLeft);
-                   writeVertex(lv, hs, writer, nodeRight);
-               }
-               logger.info("write success,take time:{}", tracker.getHumanFriendlyElapsedTime());
-           }
-       }
-       else
-       {
-           try (
-                   BufferedReader reader = new BufferedReader(new FileReader(lv.vertexFile));
-                   BufferedWriter writer = new BufferedWriter(new FileWriter(out))
-           )
-           {
-               ProgressTracker tracker = new ProgressTracker(lv.vertexFileCount);
-               tracker.start();
-               int cnt = 0;
-               writer.write("node,CommunityID,CommunityCount,kin,kout");
-               writer.write(System.lineSeparator());
-               while (reader.ready())
-               {
-                   final String line = reader.readLine();
-                   if (line.startsWith("#"))
-                   {
-                       continue;
-                   }
-                   cnt++;
-                   if (cnt % 10_0000 == 0)
-                   {
-                       tracker.setCurrent(cnt);
-                       logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
-                               tracker.getHumanFriendlyEtcTime());
-                   }
-                   final int node = Integer.parseInt(line);
-                   writeVertex(lv, hs, writer, node);
-               }
-               logger.info("write success,take time:{}", tracker.getHumanFriendlyElapsedTime());
-           }
-       }
+        if (lv.vertexFile == null)
+        {
+            try (
+                    BufferedReader reader = new BufferedReader(new FileReader(lv.edgeFile));
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(out))
+            )
+            {
+                ProgressTracker tracker = new ProgressTracker(lv.edgeFileCount);
+                tracker.start();
+                int cnt = 0;
+                writer.write("node,CommunityID,CommunityCount,kin,kout");
+                writer.write(System.lineSeparator());
+                while (reader.ready())
+                {
+                    final String line = reader.readLine();
+                    if (line.startsWith("#"))
+                    {
+                        continue;
+                    }
+                    cnt++;
+                    if (cnt % 10_0000 == 0)
+                    {
+                        tracker.setCurrent(cnt);
+                        logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
+                                tracker.getHumanFriendlyEtcTime());
+                    }
+                    final String[] strs = line.trim().split("[\\s　]+");
+                    final int nodeLeft = Integer.parseInt(strs[0]);
+                    final int nodeRight = Integer.parseInt(strs[1]);
+                    writeVertex(lv, hs, writer, nodeLeft);
+                    writeVertex(lv, hs, writer, nodeRight);
+                }
+                logger.info("write success,take time:{}", tracker.getHumanFriendlyElapsedTime());
+            }
+        }
+        else
+        {
+            try (
+                    BufferedReader reader = new BufferedReader(new FileReader(lv.vertexFile));
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(out))
+            )
+            {
+                ProgressTracker tracker = new ProgressTracker(lv.vertexFileCount);
+                tracker.start();
+                int cnt = 0;
+                writer.write("node,CommunityID,CommunityCount,kin,kout");
+                writer.write(System.lineSeparator());
+                while (reader.ready())
+                {
+                    final String line = reader.readLine();
+                    if (line.startsWith("#"))
+                    {
+                        continue;
+                    }
+                    cnt++;
+                    if (cnt % 10_0000 == 0)
+                    {
+                        tracker.setCurrent(cnt);
+                        logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
+                                tracker.getHumanFriendlyEtcTime());
+                    }
+                    final int node = Integer.parseInt(line);
+                    writeVertex(lv, hs, writer, node);
+                }
+                logger.info("write success,take time:{}", tracker.getHumanFriendlyElapsedTime());
+            }
+        }
     }
 
     private static void writeVertex(Louvain lv, IntSet hs, BufferedWriter writer, int rawNode) throws IOException
