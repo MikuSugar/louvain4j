@@ -1,58 +1,69 @@
 package me.mikusugar.louvain;
 
+import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
+import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
+
 /**
  * @author mikusugar
  * @version 1.0, 2023/10/16 15:54
  */
 public class Edge
 {
-    private final double[] edgeWeights;
+    private final DoubleBigArrayBigList edgeWeights;
 
-    private final int[] edgeInfos;
+    private final IntBigArrayBigList edgeInfos;
 
-    public Edge(int size)
+    public Edge(long size)
     {
-        this.edgeWeights = new double[size];
-        this.edgeInfos = new int[3 * size];
+        this.edgeInfos = new IntBigArrayBigList(size * 3);
+        for (int i = 0; i < size * 3; i++)
+        {
+            edgeInfos.add(0);
+        }
+        this.edgeWeights = new DoubleBigArrayBigList(size);
+        for (int i = 0; i < size; i++)
+        {
+            edgeWeights.add(0d);
+        }
     }
 
-    public void setLeft(int idx, int leftValue)
+    public void setLeft(long idx, int leftValue)
     {
-        this.edgeInfos[idx * 3] = leftValue;
+        this.edgeInfos.set(idx * 3, leftValue);
     }
 
-    public void setRight(int idx, int rightValue)
+    public void setRight(long idx, int rightValue)
     {
-        this.edgeInfos[idx * 3 + 1] = rightValue;
+        this.edgeInfos.set(idx * 3 + 1, rightValue);
     }
 
-    public void setNext(int idx, int nextValue)
+    public void setNext(long idx, int nextValue)
     {
-        this.edgeInfos[idx * 3 + 2] = nextValue;
+        this.edgeInfos.set(idx * 3 + 2, nextValue);
     }
 
-    public void setWeight(int idx, double weight)
+    public void setWeight(long idx, double weight)
     {
-        this.edgeWeights[idx] = weight;
+        this.edgeWeights.set(idx, weight);
     }
 
-    public int getLeft(int idx)
+    public int getLeft(long idx)
     {
-        return this.edgeInfos[idx * 3];
+        return this.edgeInfos.getInt(idx * 3);
     }
 
-    public int getRight(int idx)
+    public int getRight(long idx)
     {
-        return this.edgeInfos[idx * 3 + 1];
+        return this.edgeInfos.getInt(idx * 3 + 1);
     }
 
-    public int getNext(int idx)
+    public int getNext(long idx)
     {
-        return this.edgeInfos[idx * 3 + 2];
+        return this.edgeInfos.getInt(idx * 3 + 2);
     }
 
-    public double getWeight(int idx)
+    public double getWeight(long idx)
     {
-        return this.edgeWeights[idx];
+        return this.edgeWeights.getDouble(idx);
     }
 }
