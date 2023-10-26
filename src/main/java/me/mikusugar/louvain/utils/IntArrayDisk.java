@@ -1,11 +1,14 @@
 package me.mikusugar.louvain.utils;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import me.mikusugar.louvain.LouvainAlgorithm;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
@@ -15,6 +18,8 @@ import java.util.UUID;
  */
 public class IntArrayDisk implements AutoCloseable
 {
+    private final static Logger logger = LoggerFactory.getLogger(IntArrayDisk.class);
+
     /**
      * 数组长度
      */
@@ -50,13 +55,22 @@ public class IntArrayDisk implements AutoCloseable
 
         //init
         int batches = (int)(size / batchSize);
+        ProgressTracker initTracker = new ProgressTracker(batches);
+        initTracker.start();
         for (int i = 0; i < batches; i++)
         {
+
             final int[] value = new int[batchSize];
             diskMap.put(i, value);
             if (memoryMap.size() <= memoryBatchCount)
             {
                 memoryMap.put(i, value);
+            }
+            initTracker.setCurrent(i + 1);
+            if ((i+1) % 10000 == 0)
+            {
+                logger.info("init progress:{},etc:{}", initTracker.getHumanFriendlyProgress(),
+                        initTracker.getHumanFriendlyEtcTime());
             }
         }
         if (size % batchSize != 0)

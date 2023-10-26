@@ -23,8 +23,8 @@ public class Edge implements AutoCloseable
 
     public Edge(long size)
     {
-        int memoryBatchCount = 50_0000;
-        int batchSize = 1000;
+        int memoryBatchCount = 5_0000;
+        int batchSize = 10000;
         logger.info("edge is applying for memory.");
         this.edgeInfos = new IntArrayDisk(size * 2, memoryBatchCount, batchSize, Constant.TEMP_DIR);
         logger.info("memory has been applied:{}", RamUsageEstimator.humanReadableUnits(edgeInfos.getMemoryUsage()));

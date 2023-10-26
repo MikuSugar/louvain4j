@@ -6,6 +6,8 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
@@ -15,6 +17,8 @@ import java.util.UUID;
  */
 public class LongArrayDisk implements AutoCloseable
 {
+    private final static Logger logger = LoggerFactory.getLogger(LongArrayDisk.class);
+
     /**
      * 数组长度
      */
@@ -50,6 +54,8 @@ public class LongArrayDisk implements AutoCloseable
 
         //init
         int batches = (int)(size / batchSize);
+        ProgressTracker initTracker = new ProgressTracker(batches);
+        initTracker.start();
         for (int i = 0; i < batches; i++)
         {
             final long[] value = new long[batchSize];
@@ -57,6 +63,12 @@ public class LongArrayDisk implements AutoCloseable
             if (memoryMap.size() <= memoryBatchCount)
             {
                 memoryMap.put(i, value);
+            }
+            initTracker.setCurrent(i + 1);
+            if ((i + 1) % 10000 == 0)
+            {
+                logger.info("init progress:{},etc:{}", initTracker.getHumanFriendlyProgress(),
+                        initTracker.getHumanFriendlyEtcTime());
             }
         }
         if (size % batchSize != 0)
@@ -145,8 +157,7 @@ public class LongArrayDisk implements AutoCloseable
         int memoryBatchCount = 101;
         int batchSize = 43234;
         try (
-                LongArrayDisk array = new LongArrayDisk(size, memoryBatchCount, batchSize,
-                        "/Users/mikusugar/Downloads")
+                LongArrayDisk array = new LongArrayDisk(size, memoryBatchCount, batchSize, "/Users/mikusugar/Downloads")
         )
         {
             for (int i = 0; i < array.length; i++)
