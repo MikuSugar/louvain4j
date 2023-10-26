@@ -277,16 +277,35 @@ public class LouvainAlgorithm
         do
         {
             ProgressTracker tracker = new ProgressTracker(lv.clen);
+            Thread thread = new Thread(() ->
+            {
+                long lastCount = -1;
+                while (!Thread.interrupted())
+                {
+                    final long count = tracker.getCurrent();
+                    if (count != lastCount)
+                    {
+                        lastCount= count;
+                        logger.info("One iteration inner first stage progress: {},etc:{}",
+                                tracker.getHumanFriendlyProgress(), tracker.getHumanFriendlyEtcTime());
+                    }
+                    try
+                    {
+                        //noinspection BusyWait
+                        Thread.sleep(10 * 1000);
+                    }
+                    catch (InterruptedException e)
+                    {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }, "firstStage-tracker");
             tracker.start();
+            thread.start();
             cct = 0;
             for (int i = 0; i < lv.clen; i++)
             {
                 tracker.setCurrent(i);
-                if (i % 10_0000 == 0)
-                {
-                    logger.info("One iteration inner first stage progress: {},etc:{}",
-                            tracker.getHumanFriendlyProgress(), tracker.getHumanFriendlyEtcTime());
-                }
                 int ci = lv.cindex[i];
                 double kv = lv.node.getKin(ci) + lv.node.getKout(ci);
                 int cid = lv.node.getClsid(ci);
@@ -341,6 +360,7 @@ public class LouvainAlgorithm
                     stageTwo = 1;
                 }
             }
+            thread.interrupt();
             logger.info("One iteration inner first stage, changed nodes: {},take time:{}", cct,
                     tracker.getHumanFriendlyElapsedTime());
         } while (cct * 1d / lv.clen >= 0.001);

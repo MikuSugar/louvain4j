@@ -208,6 +208,11 @@ public class ProgressTracker
         return minutes + "m" + seconds + "s";
     }
 
+    public long getCurrent()
+    {
+        return current;
+    }
+
     public static void main(String[] args) throws InterruptedException
     {
         Random random = new Random();
