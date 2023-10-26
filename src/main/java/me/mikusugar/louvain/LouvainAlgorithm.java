@@ -65,6 +65,7 @@ public class LouvainAlgorithm
     {
         Int2IntMap hs = new Int2IntOpenHashMap();
         long fileCount;
+        logger.info("read file line count...");
         try (Stream<String> s = Files.lines(Paths.get(input)))
         {
             fileCount = s.count();

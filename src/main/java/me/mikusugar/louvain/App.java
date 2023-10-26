@@ -13,12 +13,9 @@ public class App
     {
         String input = args[0];
         Louvain louvain = LouvainAlgorithm.createLouvain(input);
-        if (louvain != null)
-        {
-            LouvainAlgorithm.learnLouvain(louvain);
-            // Do something with the results
-            LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
-            LouvainAlgorithm.clear(louvain);
-        }
+        LouvainAlgorithm.learnLouvain(louvain);
+        // Do something with the results
+        LouvainAlgorithm.saveLouvain(louvain, input + "_out.txt");
+        LouvainAlgorithm.clear(louvain);
     }
 }
