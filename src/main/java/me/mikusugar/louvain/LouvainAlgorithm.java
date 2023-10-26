@@ -274,9 +274,17 @@ public class LouvainAlgorithm
         stageTwo = 0;
         do
         {
+            ProgressTracker tracker = new ProgressTracker(lv.clen);
+            tracker.start();
             cct = 0;
             for (int i = 0; i < lv.clen; i++)
             {
+                tracker.setCurrent(i);
+                if (i % 10_0000 == 0)
+                {
+                    logger.info("One iteration inner first stage progress: {},etc:{}",
+                            tracker.getHumanFriendlyProgress(), tracker.getHumanFriendlyEtcTime());
+                }
                 int ci = lv.cindex[i];
                 double kv = lv.node.getKin(ci) + lv.node.getKout(ci);
                 int cid = lv.node.getClsid(ci);
@@ -331,7 +339,8 @@ public class LouvainAlgorithm
                     stageTwo = 1;
                 }
             }
-            logger.info("One iteration inner first stage, changed nodes: " + cct);
+            logger.info("One iteration inner first stage, changed nodes: {},take time:{}", cct,
+                    tracker.getHumanFriendlyElapsedTime());
         } while (cct * 1d / lv.clen >= 0.001);
         return stageTwo;
     }
@@ -472,6 +481,7 @@ public class LouvainAlgorithm
         {
             lv.cindex = null;
             lv.node = null;
+            lv.edge.close();
             lv.edge = null;
         }
     }

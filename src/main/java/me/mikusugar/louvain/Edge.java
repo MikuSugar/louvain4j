@@ -1,8 +1,8 @@
 package me.mikusugar.louvain;
 
-import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
-import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import me.mikusugar.louvain.utils.DoubleArrayDisk;
+import me.mikusugar.louvain.utils.IntArrayDisk;
+import me.mikusugar.louvain.utils.LongArrayDisk;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,40 +11,37 @@ import org.slf4j.LoggerFactory;
  * @author mikusugar
  * @version 1.0, 2023/10/16 15:54
  */
-public class Edge
+public class Edge implements AutoCloseable
 {
-    private final DoubleBigArrayBigList edgeWeights;
+    private final DoubleArrayDisk edgeWeights;
 
-    private final IntBigArrayBigList edgeInfos;
+    private final IntArrayDisk edgeInfos;
 
-    private final LongBigArrayBigList edgeInfos1;
+    private final LongArrayDisk edgeInfos1;
 
     private static final Logger logger = LoggerFactory.getLogger(Edge.class);
 
     public Edge(long size)
     {
+        int memoryBatchCount = 50_0000;
+        int batchSize = 1000;
         logger.info("edge is applying for memory.");
-        this.edgeInfos = new IntBigArrayBigList(size * 2);
-        for (int i = 0; i < size * 2; i++)
-        {
-            edgeInfos.add(0);
-        }
-        logger.info("memory has been applied:{}", RamUsageEstimator.humanSizeOf(edgeInfos));
-        this.edgeWeights = new DoubleBigArrayBigList(size);
-        for (int i = 0; i < size; i++)
-        {
-            edgeWeights.add(0d);
-        }
-        logger.info("memory has been applied:{}", RamUsageEstimator.humanReadableUnits(
-                RamUsageEstimator.sizeOf(edgeInfos) + RamUsageEstimator.sizeOf(edgeWeights)));
-        this.edgeInfos1 = new LongBigArrayBigList(size);
-        for (int i = 0; i < size; i++)
-        {
-            edgeInfos1.add(0L);
-        }
+        this.edgeInfos = new IntArrayDisk(size * 2, memoryBatchCount, batchSize, Constant.TEMP_DIR);
+        logger.info("memory has been applied:{}", RamUsageEstimator.humanReadableUnits(edgeInfos.getMemoryUsage()));
+        this.edgeWeights = new DoubleArrayDisk(size, memoryBatchCount, batchSize, Constant.TEMP_DIR);
+        logger.info("memory has been applied:{}",
+                RamUsageEstimator.humanReadableUnits(edgeInfos.getMemoryUsage() + edgeWeights.getMemoryUsage()));
+        this.edgeInfos1 = new LongArrayDisk(size, memoryBatchCount, batchSize, Constant.TEMP_DIR);
         logger.info("memory usage:{}", RamUsageEstimator.humanReadableUnits(
-                RamUsageEstimator.sizeOf(edgeInfos) + RamUsageEstimator.sizeOf(edgeWeights) + RamUsageEstimator.sizeOf(
-                        edgeInfos1)));
+                edgeInfos.getMemoryUsage() + edgeWeights.getMemoryUsage() + edgeInfos1.getMemoryUsage()));
+    }
+
+    @Override
+    public void close()
+    {
+        edgeWeights.close();
+        edgeInfos.close();
+        edgeInfos1.close();
     }
 
     public void setLeft(long idx, int leftValue)
@@ -69,21 +66,21 @@ public class Edge
 
     public int getLeft(long idx)
     {
-        return this.edgeInfos.getInt(idx * 2);
+        return this.edgeInfos.get(idx * 2);
     }
 
     public int getRight(long idx)
     {
-        return this.edgeInfos.getInt(idx * 2 + 1);
+        return this.edgeInfos.get(idx * 2 + 1);
     }
 
     public long getNext(long idx)
     {
-        return this.edgeInfos1.getLong(idx);
+        return this.edgeInfos1.get(idx);
     }
 
     public double getWeight(long idx)
     {
-        return this.edgeWeights.getDouble(idx);
+        return this.edgeWeights.get(idx);
     }
 }
