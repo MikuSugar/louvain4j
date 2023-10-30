@@ -1,11 +1,10 @@
 package me.mikusugar.louvain.utils;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import me.mikusugar.louvain.LouvainAlgorithm;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.mapdb.HTreeMap;
+import org.mapdb.IndexTreeList;
 import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ public class IntArrayDisk implements AutoCloseable
 
     private final DB db;
 
-    private final HTreeMap<Integer, int[]> diskMap;
+    private final IndexTreeList<int[]> listDisk;
 
     private final Int2ObjectLinkedOpenHashMap<int[]> memoryMap;
 
@@ -47,10 +46,9 @@ public class IntArrayDisk implements AutoCloseable
         this.memoryBatchCount = memoryBatchCount;
         this.batchSize = batchSize;
 
-        this.db = DBMaker.fileDB(tempDir + "/" + UUID.randomUUID()).fileMmapEnableIfSupported().fileDeleteAfterClose()
-                .make();
-        this.diskMap = db.hashMap(UUID.randomUUID().toString(), Serializer.INTEGER, Serializer.INT_ARRAY)
-                .createOrOpen();
+        this.db = DBMaker.fileDB(tempDir + "/" + UUID.randomUUID() + "db.tmp").fileMmapEnableIfSupported()
+                .fileDeleteAfterClose().make();
+        this.listDisk = db.indexTreeList(UUID.randomUUID().toString(), Serializer.INT_ARRAY).createOrOpen();
         this.memoryMap = new Int2ObjectLinkedOpenHashMap<>();
 
         //init
@@ -59,15 +57,14 @@ public class IntArrayDisk implements AutoCloseable
         initTracker.start();
         for (int i = 0; i < batches; i++)
         {
-
             final int[] value = new int[batchSize];
-            diskMap.put(i, value);
+            listDisk.add(value);
             if (memoryMap.size() <= memoryBatchCount)
             {
                 memoryMap.put(i, value);
             }
             initTracker.setCurrent(i + 1);
-            if ((i+1) % 10000 == 0)
+            if ((i + 1) % 10000 == 0)
             {
                 logger.info("init progress:{},etc:{}", initTracker.getHumanFriendlyProgress(),
                         initTracker.getHumanFriendlyEtcTime());
@@ -75,7 +72,7 @@ public class IntArrayDisk implements AutoCloseable
         }
         if (size % batchSize != 0)
         {
-            diskMap.put(batches, new int[(int)((size + batchSize) % batchSize)]);
+            listDisk.add(new int[(int)((size + batchSize) % batchSize)]);
         }
     }
 
@@ -88,7 +85,7 @@ public class IntArrayDisk implements AutoCloseable
         int[] array = memoryMap.getAndMoveToLast(key);
         if (array == null)
         {
-            array = diskMap.get(key);
+            array = listDisk.get(key);
             if (array == null)
             {
                 throw new IllegalArgumentException(idx + " not found!");
@@ -98,7 +95,7 @@ public class IntArrayDisk implements AutoCloseable
             {
                 final int firstIntKey = memoryMap.firstIntKey();
                 final int[] firstValue = memoryMap.removeFirst();
-                diskMap.put(firstIntKey, firstValue);
+                listDisk.set(firstIntKey, firstValue);
             }
         }
         return array[index];
@@ -120,7 +117,7 @@ public class IntArrayDisk implements AutoCloseable
         int[] array = memoryMap.getAndMoveToLast(key);
         if (array == null)
         {
-            array = diskMap.get(key);
+            array = listDisk.get(key);
             if (array == null)
             {
                 throw new IllegalArgumentException(idx + " not found!");
@@ -131,7 +128,7 @@ public class IntArrayDisk implements AutoCloseable
             {
                 final int firstIntKey = memoryMap.firstIntKey();
                 final int[] firstValue = memoryMap.removeFirst();
-                diskMap.put(firstIntKey, firstValue);
+                listDisk.set(firstIntKey, firstValue);
             }
         }
         else
@@ -143,7 +140,7 @@ public class IntArrayDisk implements AutoCloseable
     @Override
     public void close()
     {
-        diskMap.close();
+        listDisk.clear();
         db.close();
         memoryMap.clear();
     }

@@ -64,19 +64,22 @@ public class LouvainAlgorithm
 
     public static Louvain createLouvain(String edgeFile) throws IOException
     {
-        return createLouvain(edgeFile, null);
+        return createLouvain(edgeFile, null, -1L, false);
     }
 
-    public static Louvain createLouvain(String edgeFile, String vertexFile) throws IOException
+    public static Louvain createLouvain(String edgeFile, String vertexFile, long edgeFileCount, boolean isBothFile)
+            throws IOException
     {
         Int2IntMap hs = new Int2IntOpenHashMap();
-        long edgeFileCount;
-        logger.info("read edge file line count...");
-        try (Stream<String> s = Files.lines(Paths.get(edgeFile)))
+        if (edgeFileCount == -1)
         {
-            edgeFileCount = s.filter(line -> !line.startsWith("#")).count();
-            logger.info("edge file line count:{}", edgeFileCount);
+            logger.info("read edge file line count...");
+            try (Stream<String> s = Files.lines(Paths.get(edgeFile)))
+            {
+                edgeFileCount = s.filter(line -> !line.startsWith("#")).count();
+            }
         }
+        logger.info("edge file line count:{}", edgeFileCount);
         Louvain lv = new Louvain();
         lv.edgeFile = edgeFile;
         lv.edgeFileCount = edgeFileCount;
@@ -120,7 +123,14 @@ public class LouvainAlgorithm
                 logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
                 logger.info("id mapping memory usage:{}", RamUsageEstimator.humanSizeOf(hs));
                 lv.clen = hs.size();
-                lv.elen = l * 2;
+                if (isBothFile)
+                {
+                    lv.elen = l;
+                }
+                else
+                {
+                    lv.elen = l * 2;
+                }
                 lv.nlen = lv.clen;
                 lv.olen = lv.elen;
                 mallocLouvain(lv);
@@ -164,7 +174,14 @@ public class LouvainAlgorithm
                 logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
                 logger.info("id mapping memory usage:{}", RamUsageEstimator.humanSizeOf(hs));
                 lv.clen = hs.size();
-                lv.elen = edgeFileCount * 2;
+                if (isBothFile)
+                {
+                    lv.elen = edgeFileCount;
+                }
+                else
+                {
+                    lv.elen = edgeFileCount * 2;
+                }
                 lv.nlen = lv.clen;
                 lv.olen = lv.elen;
                 mallocLouvain(lv);
@@ -197,11 +214,17 @@ public class LouvainAlgorithm
                 double weight = tokens.length == 3 ? Double.parseDouble(tokens[2]) : 1d;
                 lv.sumw += weight;
                 initNode(lv, left, weight);
-                initNode(lv, right, weight);
+                if (!isBothFile)
+                {
+                    initNode(lv, right, weight);
+                }
                 linkEdge(lv, left, right, ei, weight);
                 ei++;
-                linkEdge(lv, right, left, ei, weight);
-                ei++;
+                if (!isBothFile)
+                {
+                    linkEdge(lv, right, left, ei, weight);
+                    ei++;
+                }
             }
             logger.info("init success. take time:{}", initTracker.getHumanFriendlyElapsedTime());
             return lv;
@@ -285,7 +308,7 @@ public class LouvainAlgorithm
                     final long count = tracker.getCurrent();
                     if (count != lastCount)
                     {
-                        lastCount= count;
+                        lastCount = count;
                         logger.info("One iteration inner first stage progress: {},etc:{}",
                                 tracker.getHumanFriendlyProgress(), tracker.getHumanFriendlyEtcTime());
                     }

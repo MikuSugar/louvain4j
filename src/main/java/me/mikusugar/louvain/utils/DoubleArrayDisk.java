@@ -2,10 +2,7 @@ package me.mikusugar.louvain.utils;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import org.apache.lucene.util.RamUsageEstimator;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.HTreeMap;
-import org.mapdb.Serializer;
+import org.mapdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +33,7 @@ public class DoubleArrayDisk implements AutoCloseable
 
     private final DB db;
 
-    private final HTreeMap<Integer, double[]> diskMap;
+    private final IndexTreeList<double[]> diskList;
 
     private final Int2ObjectLinkedOpenHashMap<double[]> memoryMap;
 
@@ -46,10 +43,9 @@ public class DoubleArrayDisk implements AutoCloseable
         this.memoryBatchCount = memoryBatchCount;
         this.batchSize = batchSize;
 
-        this.db = DBMaker.fileDB(tempDir + "/" + UUID.randomUUID()).fileMmapEnableIfSupported().fileDeleteAfterClose()
-                .make();
-        this.diskMap = db.hashMap(UUID.randomUUID().toString(), Serializer.INTEGER, Serializer.DOUBLE_ARRAY)
-                .createOrOpen();
+        this.db = DBMaker.fileDB(tempDir + "/" + UUID.randomUUID() + "db.tmp").fileDeleteAfterClose()
+                .fileMmapEnableIfSupported().make();
+        this.diskList = db.indexTreeList(UUID.randomUUID().toString(), Serializer.DOUBLE_ARRAY).createOrOpen();
         this.memoryMap = new Int2ObjectLinkedOpenHashMap<>();
 
         //init
@@ -59,7 +55,7 @@ public class DoubleArrayDisk implements AutoCloseable
         for (int i = 0; i < batches; i++)
         {
             final double[] value = new double[batchSize];
-            diskMap.put(i, value);
+            diskList.add(value);
             if (memoryMap.size() <= memoryBatchCount)
             {
                 memoryMap.put(i, value);
@@ -73,7 +69,7 @@ public class DoubleArrayDisk implements AutoCloseable
         }
         if (size % batchSize != 0)
         {
-            diskMap.put(batches, new double[(int)((size + batchSize) % batchSize)]);
+            diskList.add(new double[(int)((size + batchSize) % batchSize)]);
         }
     }
 
@@ -86,7 +82,7 @@ public class DoubleArrayDisk implements AutoCloseable
         double[] array = memoryMap.getAndMoveToLast(key);
         if (array == null)
         {
-            array = diskMap.get(key);
+            array = diskList.get(key);
             if (array == null)
             {
                 throw new IllegalArgumentException(idx + " not found!");
@@ -96,7 +92,7 @@ public class DoubleArrayDisk implements AutoCloseable
             {
                 final int firstIntKey = memoryMap.firstIntKey();
                 final double[] firstValue = memoryMap.removeFirst();
-                diskMap.put(firstIntKey, firstValue);
+                diskList.set(firstIntKey, firstValue);
             }
         }
         return array[index];
@@ -118,7 +114,7 @@ public class DoubleArrayDisk implements AutoCloseable
         double[] array = memoryMap.getAndMoveToLast(key);
         if (array == null)
         {
-            array = diskMap.get(key);
+            array = diskList.get(key);
             if (array == null)
             {
                 throw new IllegalArgumentException(idx + " not found!");
@@ -129,7 +125,7 @@ public class DoubleArrayDisk implements AutoCloseable
             {
                 final int firstIntKey = memoryMap.firstIntKey();
                 final double[] firstValue = memoryMap.removeFirst();
-                diskMap.put(firstIntKey, firstValue);
+                diskList.set(firstIntKey, firstValue);
             }
         }
         else
@@ -141,7 +137,7 @@ public class DoubleArrayDisk implements AutoCloseable
     @Override
     public void close()
     {
-        diskMap.close();
+        diskList.clear();
         db.close();
         memoryMap.clear();
     }

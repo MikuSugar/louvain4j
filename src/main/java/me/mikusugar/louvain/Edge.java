@@ -1,8 +1,11 @@
 package me.mikusugar.louvain;
 
-import me.mikusugar.louvain.utils.DoubleArrayDisk;
-import me.mikusugar.louvain.utils.IntArrayDisk;
-import me.mikusugar.louvain.utils.LongArrayDisk;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleBigArrayBigList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,35 +16,94 @@ import org.slf4j.LoggerFactory;
  */
 public class Edge implements AutoCloseable
 {
-    private final DoubleArrayDisk edgeWeights;
+    private final DoubleBigArrayBigList edgeWeights;
 
-    private final IntArrayDisk edgeInfos;
+    private final IntBigArrayBigList edgeInfos;
 
-    private final LongArrayDisk edgeInfos1;
+    private final LongBigArrayBigList edgeInfos1;
 
     private static final Logger logger = LoggerFactory.getLogger(Edge.class);
 
     public Edge(long size)
     {
-        int memoryBatchCount = 5_0000;
-        int batchSize = 10000;
         logger.info("edge is applying for memory.");
-        this.edgeInfos = new IntArrayDisk(size * 2, memoryBatchCount, batchSize, Constant.TEMP_DIR);
-        logger.info("memory has been applied:{}", RamUsageEstimator.humanReadableUnits(edgeInfos.getMemoryUsage()));
-        this.edgeWeights = new DoubleArrayDisk(size, memoryBatchCount, batchSize, Constant.TEMP_DIR);
-        logger.info("memory has been applied:{}",
-                RamUsageEstimator.humanReadableUnits(edgeInfos.getMemoryUsage() + edgeWeights.getMemoryUsage()));
-        this.edgeInfos1 = new LongArrayDisk(size, memoryBatchCount, batchSize, Constant.TEMP_DIR);
+        this.edgeInfos = new IntBigArrayBigList(size * 2);
+        init0(size * 2);
+        logger.info("memory has been applied:{}", RamUsageEstimator.humanSizeOf(edgeInfos));
+        this.edgeWeights = new DoubleBigArrayBigList(size);
+        init1(size);
+        logger.info("memory has been applied:{}", RamUsageEstimator.humanReadableUnits(
+                RamUsageEstimator.sizeOf(edgeInfos) + RamUsageEstimator.sizeOf(edgeWeights)));
+        this.edgeInfos1 = new LongBigArrayBigList(size);
+        init2(size);
         logger.info("memory usage:{}", RamUsageEstimator.humanReadableUnits(
-                edgeInfos.getMemoryUsage() + edgeWeights.getMemoryUsage() + edgeInfos1.getMemoryUsage()));
+                RamUsageEstimator.sizeOf(edgeInfos) + RamUsageEstimator.sizeOf(edgeWeights) + RamUsageEstimator.sizeOf(
+                        edgeInfos1)));
+    }
+
+    private void init0(long size)
+    {
+        int batchSize = 100_0000;
+        IntArrayList list = new IntArrayList(batchSize);
+        for (int i = 0; i < batchSize; i++)
+        {
+            list.add(0);
+        }
+        for (int i = 0; i < size / batchSize; i++)
+        {
+            this.edgeInfos.addAll(list);
+        }
+        list.clear();
+        for (int i = 0; i < (size + batchSize) % batchSize; i++)
+        {
+            this.edgeInfos.add(0);
+        }
+    }
+
+    private void init1(long size)
+    {
+        int batchSize = 100_0000;
+        DoubleArrayList list = new DoubleArrayList(batchSize);
+        for (int i = 0; i < batchSize; i++)
+        {
+            list.add(0);
+        }
+        for (int i = 0; i < size / batchSize; i++)
+        {
+            this.edgeWeights.addAll(list);
+        }
+        list.clear();
+        for (int i = 0; i < (size + batchSize) % batchSize; i++)
+        {
+            this.edgeWeights.add(0);
+        }
+    }
+
+    private void init2(long size)
+    {
+        int batchSize = 100_0000;
+        LongArrayList list = new LongArrayList(batchSize);
+        for (int i = 0; i < batchSize; i++)
+        {
+            list.add(0);
+        }
+        for (int i = 0; i < size / batchSize; i++)
+        {
+            this.edgeInfos1.addAll(list);
+        }
+        list.clear();
+        for (int i = 0; i < (size + batchSize) % batchSize; i++)
+        {
+            this.edgeInfos1.add(0);
+        }
     }
 
     @Override
     public void close()
     {
-        edgeWeights.close();
-        edgeInfos.close();
-        edgeInfos1.close();
+        edgeWeights.clear();
+        edgeInfos.clear();
+        edgeInfos1.clear();
     }
 
     public void setLeft(long idx, int leftValue)
@@ -66,21 +128,21 @@ public class Edge implements AutoCloseable
 
     public int getLeft(long idx)
     {
-        return this.edgeInfos.get(idx * 2);
+        return this.edgeInfos.getInt(idx * 2);
     }
 
     public int getRight(long idx)
     {
-        return this.edgeInfos.get(idx * 2 + 1);
+        return this.edgeInfos.getInt(idx * 2 + 1);
     }
 
     public long getNext(long idx)
     {
-        return this.edgeInfos1.get(idx);
+        return this.edgeInfos1.getLong(idx);
     }
 
     public double getWeight(long idx)
     {
-        return this.edgeWeights.get(idx);
+        return this.edgeWeights.getDouble(idx);
     }
 }
