@@ -28,3 +28,5 @@ replay_pid*
 target
 
 *_out.txt
+
+src/test/java/fun
