@@ -13,6 +13,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
@@ -100,7 +101,7 @@ public class LouvainAlgorithm
                         continue;
                     }
                     cnt++;
-                    if (cnt % 10_0000 == 0)
+                    if (cnt % 100_0000 == 0)
                     {
                         preReadTracker.setCurrent(cnt);
                         logger.info("pre-read progress:{},etc:{}", preReadTracker.getHumanFriendlyProgress(),
@@ -151,7 +152,7 @@ public class LouvainAlgorithm
                         continue;
                     }
                     cnt++;
-                    if (cnt % 10_0000 == 0)
+                    if (cnt % 100_0000 == 0)
                     {
                         preReadTracker.setCurrent(cnt);
                         logger.info("pre-read progress:{},etc:{}", preReadTracker.getHumanFriendlyProgress(),
@@ -187,7 +188,7 @@ public class LouvainAlgorithm
                     continue;
                 }
                 cnt++;
-                if (cnt % 10_0000 == 0)
+                if (cnt % 100_0000 == 0)
                 {
                     initTracker.setCurrent(cnt);
                     logger.info("init progress:{},etc:{}", initTracker.getHumanFriendlyProgress(),
@@ -281,27 +282,27 @@ public class LouvainAlgorithm
             ProgressTracker tracker = new ProgressTracker(lv.clen);
             Thread thread = new Thread(() ->
             {
-                long lastCount = -1;
-                while (!Thread.interrupted())
+                long lastCount = 0;
+                while (!Thread.currentThread().isInterrupted())
                 {
-                    final long count = tracker.getCurrent();
-                    if (count != lastCount)
-                    {
-                        lastCount = count;
-                        logger.info("One iteration inner first stage progress: {},etc:{}",
-                                tracker.getHumanFriendlyProgress(), tracker.getHumanFriendlyEtcTime());
-                    }
                     try
                     {
                         //noinspection BusyWait
-                        Thread.sleep(10 * 1000);
+                        Thread.sleep(20 * 1000);
                     }
                     catch (InterruptedException e)
                     {
                         Thread.currentThread().interrupt();
                     }
+                    final long count = tracker.getCurrent();
+                    if (count != lastCount && !Thread.currentThread().isInterrupted())
+                    {
+                        lastCount = count;
+                        logger.info("iteration inner first stage progress: {},etc:{}",
+                                tracker.getHumanFriendlyProgress(), tracker.getHumanFriendlyEtcTime());
+                    }
                 }
-            }, "firstStage-tracker");
+            }, "tracker-" + UUID.randomUUID());
             tracker.start();
             thread.start();
             cct = 0;
@@ -466,7 +467,7 @@ public class LouvainAlgorithm
                         continue;
                     }
                     cnt++;
-                    if (cnt % 10_0000 == 0)
+                    if (cnt % 100_0000 == 0)
                     {
                         tracker.setCurrent(cnt);
                         logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
@@ -501,7 +502,7 @@ public class LouvainAlgorithm
                         continue;
                     }
                     cnt++;
-                    if (cnt % 10_0000 == 0)
+                    if (cnt % 100_0000 == 0)
                     {
                         tracker.setCurrent(cnt);
                         logger.info("write progress:{},etc:{}", tracker.getHumanFriendlyProgress(),
