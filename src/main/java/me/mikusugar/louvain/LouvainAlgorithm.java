@@ -64,11 +64,10 @@ public class LouvainAlgorithm
 
     public static Louvain createLouvain(String edgeFile) throws IOException
     {
-        return createLouvain(edgeFile, null, -1L, false);
+        return createLouvain(edgeFile, null, -1L);
     }
 
-    public static Louvain createLouvain(String edgeFile, String vertexFile, long edgeFileCount, boolean isBothFile)
-            throws IOException
+    public static Louvain createLouvain(String edgeFile, String vertexFile, long edgeFileCount) throws IOException
     {
         Int2IntMap hs = new Int2IntOpenHashMap();
         if (edgeFileCount == -1)
@@ -123,14 +122,7 @@ public class LouvainAlgorithm
                 logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
                 logger.info("id mapping memory usage:{}", RamUsageEstimator.humanSizeOf(hs));
                 lv.clen = hs.size();
-                if (isBothFile)
-                {
-                    lv.elen = l;
-                }
-                else
-                {
-                    lv.elen = l * 2;
-                }
+                lv.elen = l * 2;
                 lv.nlen = lv.clen;
                 lv.olen = lv.elen;
                 mallocLouvain(lv);
@@ -174,14 +166,7 @@ public class LouvainAlgorithm
                 logger.info("pre-read ok!,take time:{}", preReadTracker.getHumanFriendlyElapsedTime());
                 logger.info("id mapping memory usage:{}", RamUsageEstimator.humanSizeOf(hs));
                 lv.clen = hs.size();
-                if (isBothFile)
-                {
-                    lv.elen = edgeFileCount;
-                }
-                else
-                {
-                    lv.elen = edgeFileCount * 2;
-                }
+                lv.elen = edgeFileCount * 2;
                 lv.nlen = lv.clen;
                 lv.olen = lv.elen;
                 mallocLouvain(lv);
@@ -214,17 +199,11 @@ public class LouvainAlgorithm
                 double weight = tokens.length == 3 ? Double.parseDouble(tokens[2]) : 1d;
                 lv.sumw += weight;
                 initNode(lv, left, weight);
-                if (!isBothFile)
-                {
-                    initNode(lv, right, weight);
-                }
+                initNode(lv, right, weight);
                 linkEdge(lv, left, right, ei, weight);
                 ei++;
-                if (!isBothFile)
-                {
-                    linkEdge(lv, right, left, ei, weight);
-                    ei++;
-                }
+                linkEdge(lv, right, left, ei, weight);
+                ei++;
             }
             logger.info("init success. take time:{}", initTracker.getHumanFriendlyElapsedTime());
             return lv;

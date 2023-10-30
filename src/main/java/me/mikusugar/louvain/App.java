@@ -25,12 +25,10 @@ public class App
         logger.info("vertexFile:{}", vertexFile);
         final long edgeFileCount = args.length >= 3 ? Long.parseLong(args[2]) : -1;
         logger.info("edgeFileCount:{}", edgeFileCount);
-        final boolean isBothFile = args.length >= 4 && Boolean.parseBoolean(args[3]);
-        logger.info("isBothFile:{}", isBothFile);
 
         try
         {
-            louvain = LouvainAlgorithm.createLouvain(edgeFile, vertexFile, edgeFileCount, isBothFile);
+            louvain = LouvainAlgorithm.createLouvain(edgeFile, vertexFile, edgeFileCount);
             LouvainAlgorithm.learnLouvain(louvain);
             LouvainAlgorithm.saveLouvain(louvain, edgeFile + "_out.txt");
         }
