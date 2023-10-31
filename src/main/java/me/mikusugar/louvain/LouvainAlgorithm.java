@@ -1,9 +1,9 @@
 package me.mikusugar.louvain;
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
+import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
+import me.mikusugar.louvain.utils.KeyUtils;
 import me.mikusugar.louvain.utils.ProgressTracker;
 import org.apache.lucene.util.RamUsageEstimator;
 import org.slf4j.Logger;
@@ -280,29 +280,7 @@ public class LouvainAlgorithm
         do
         {
             ProgressTracker tracker = new ProgressTracker(lv.clen);
-            Thread thread = new Thread(() ->
-            {
-                long lastCount = 0;
-                while (!Thread.currentThread().isInterrupted())
-                {
-                    try
-                    {
-                        //noinspection BusyWait
-                        Thread.sleep(20 * 1000);
-                    }
-                    catch (InterruptedException e)
-                    {
-                        Thread.currentThread().interrupt();
-                    }
-                    final long count = tracker.getCurrent();
-                    if (count != lastCount && !Thread.currentThread().isInterrupted())
-                    {
-                        lastCount = count;
-                        logger.info("iteration inner first stage progress: {},etc:{}",
-                                tracker.getHumanFriendlyProgress(), tracker.getHumanFriendlyEtcTime());
-                    }
-                }
-            }, "tracker-" + UUID.randomUUID());
+            Thread thread = createFirstStageTackerThread(tracker);
             tracker.start();
             thread.start();
             cct = 0;
@@ -370,10 +348,37 @@ public class LouvainAlgorithm
         return stageTwo;
     }
 
+    private static Thread createFirstStageTackerThread(ProgressTracker tracker)
+    {
+        Thread thread = new Thread(() ->
+        {
+            long lastCount = 0;
+            while (!Thread.currentThread().isInterrupted())
+            {
+                try
+                {
+                    //noinspection BusyWait
+                    Thread.sleep(20 * 1000);
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                }
+                final long count = tracker.getCurrent();
+                if (count != lastCount && !Thread.currentThread().isInterrupted())
+                {
+                    lastCount = count;
+                    logger.info("iteration inner first stage progress: {},etc:{}", tracker.getHumanFriendlyProgress(),
+                            tracker.getHumanFriendlyEtcTime());
+                }
+            }
+        }, "tracker-" + UUID.randomUUID());
+        return thread;
+    }
+
     private static void secondStage(Louvain lv)
     {
         int tclen = 0;
-        int telen = 0;
         for (int i = 0; i < lv.clen; i++)
         {
             int ci = lv.cindex[i];
@@ -410,6 +415,8 @@ public class LouvainAlgorithm
             lv.node.setKout(ci, lv.node.getClstot(ci) - lv.node.getKin(ci));
             lv.node.setEindex(ci, -1);
         }
+        int telen = 0;
+        Long2DoubleMap map = new Long2DoubleOpenHashMap();
         for (int i = 0; i < lv.elen; i++)
         {
             int l = lv.edge.getLeft(i);
@@ -419,13 +426,24 @@ public class LouvainAlgorithm
             int rcid = lv.node.getClsid(r);
             if (lcid != rcid)
             {
-                lv.edge.setLeft(telen, lcid);
-                lv.edge.setRight(telen, rcid);
-                lv.edge.setWeight(telen, w);
-                lv.edge.setNext(telen, lv.node.getEindex(lcid));
-                lv.node.setEindex(lcid, telen++);
+                final long key = KeyUtils.toRelationId(lcid, rcid);
+                map.put(key, map.getOrDefault(key, 0d) + w);
             }
         }
+        logger.info("edge temp memory usage:{}", RamUsageEstimator.humanSizeOf(map));
+        for (Long2DoubleMap.Entry cur : map.long2DoubleEntrySet())
+        {
+            final long key = cur.getLongKey();
+            final double w = cur.getDoubleValue();
+            final int lcid = KeyUtils.getSourceIdFromRelationId(key);
+            final int rcid = KeyUtils.getTargetIdFromRelationId(key);
+            lv.edge.setLeft(telen, lcid);
+            lv.edge.setRight(telen, rcid);
+            lv.edge.setWeight(telen, w);
+            lv.edge.setNext(telen, lv.node.getEindex(lcid));
+            lv.node.setEindex(lcid, telen++);
+        }
+        map.clear();
         lv.elen = telen;
     }
 
@@ -437,7 +455,7 @@ public class LouvainAlgorithm
         while (firstStage(lv) > 0)
         {
             secondStage(lv);
-            logger.info("it: {},community count: {} after one pass,current modularity: {}", ++it, lv.clen,
+            logger.info("it: {},community count: {}, edge count: {},current modularity: {}", ++it, lv.clen, lv.elen,
                     calcModularity(lv));
         }
         learnTracker.setCurrent(1);
