@@ -5,7 +5,7 @@ louvain java 单机实现
 ## 使用
 
 + 算法运行 [me.mikusugar.louvain.TestLouvain](src/test/java/me/mikusugar/louvain/TestLouvain.java)
-+ 可视化 [visualization.py](src/test/java/me/mikusugar/louvain/visualization.py)
++ 可视化 [visualization.py](louvain4j_utils/visualization.py)
 
 ## 参考
 
